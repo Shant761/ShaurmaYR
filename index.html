@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шериф Мафия: Онлайн-игра</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .game-screen {
+            display: none;
+            padding: 30px;
+        }
+        
+        .active {
+            display: block;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom: 2px solid #b21f1f;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        .lobby-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid #444;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #ffcc00;
+        }
+        
+        button {
+            padding: 15px 25px;
+            background: linear-gradient(to right, #b21f1f, #8a1c1c);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #c62e2e, #a12222);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .player-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #ffcc00;
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        
+        .player-card.ready::before {
+            background: #4CAF50;
+            transform: scaleX(1);
+        }
+        
+        .player-card.mafia {
+            background: rgba(178, 31, 31, 0.3);
+        }
+        
+        .player-card.sheriff {
+            background: rgba(255, 204, 0, 0.2);
+        }
+        
+        .player-card.ready:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .player-role {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .phase-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        
+        .night {
+            background: linear-gradient(to right, #1a237e, #283593);
+        }
+        
+        .day {
+            background: linear-gradient(to right, #c62828, #b71c1c);
+        }
+        
+        .action-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .action-card {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .action-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+        
+        .log-container {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+        
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .mafia-log {
+            color: #ff6b6b;
+        }
+        
+        .sheriff-log {
+            color: #4dabf7;
+        }
+        
+        .game-over {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .winner-title {
+            font-size: 2rem;
+            color: #ffcc00;
+            margin-bottom: 20px;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .mafia-badge {
+            background: #b21f1f;
+        }
+        
+        .sheriff-badge {
+            background: #ffcc00;
+            color: black;
+        }
+        
+        .civilian-badge {
+            background: #4CAF50;
+        }
+        
+        .player-status {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
+        .alive {
+            color: #4CAF50;
+        }
+        
+        .dead {
+            color: #f44336;
+            text-decoration: line-through;
+        }
+        
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .action-container {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ШЕРИФ МАФИЯ</h1>
+            <div class="subtitle">Онлайн-версия классической игры для 5 игроков</div>
+        </header>
+        
+        <!-- Лобби для подключения игроков -->
+        <div id="lobbyScreen" class="game-screen active">
+            <div class="lobby-container">
+                <div class="input-group">
+                    <input type="text" id="playerName" placeholder="Введите ваше имя" maxlength="15">
+                    <button id="joinBtn">Присоединиться</button>
+                </div>
+                
+                <div class="game-info">
+                    <div>Игроков: <span id="playerCount">0</span>/5</div>
+                    <div>Статус: <span id="lobbyStatus">Ожидание игроков</span></div>
+                </div>
+                
+                <div class="player-list" id="playerList">
+                    <!-- Игроки будут добавляться динамически -->
+                </div>
+                
+                <button id="startBtn" disabled>Начать игру</button>
+            </div>
+        </div>
+        
+        <!-- Экран игрового процесса -->
+        <div id="gameScreen" class="game-screen">
+            <div class="game-info">
+                <div>Игроков: <span id="gamePlayerCount">0</span>/5</div>
+                <div>День: <span id="dayCount">1</span></div>
+            </div>
+            
+            <div id="phaseDisplay" class="phase-display">НОЧЬ</div>
+            
+            <div class="action-container">
+                <div class="action-card">
+                    <div class="action-title">Ваша роль</div>
+                    <div id="playerRole">Ожидание...</div>
+                    <div id="playerStatus" class="player-status alive">Статус: жив</div>
+                </div>
+                
+                <div class="action-card">
+                    <div class="action-title">Ваше действие</div>
+                    <div id="actionDescription">Ожидайте начала игры...</div>
+                    <div id="actionButtons" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                <div class="log-title">События игры</div>
+                <div id="gameLog">
+                    <div class="log-entry">Игра началась. Наступает ночь...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Экран результатов игры -->
+        <div id="resultScreen" class="game-screen">
+            <div class="game-over">
+                <div id="winnerTitle" class="winner-title">Победа мирных жителей!</div>
+                <div class="player-list" id="resultPlayerList">
+                    <!-- Результаты игроков будут добавляться динамически -->
+                </div>
+                <button id="restartBtn">Играть снова</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Состояние игры
+        const gameState = {
+            players: [],
+            currentPlayer: null,
+            dayCount: 1,
+            phase: 'night', // 'night' или 'day'
+            gameOver: false,
+            winner: null,
+            currentPlayerRole: null,
+            playerStatus: 'alive',
+            logs: []
+        };
+
+        // Роли для 5 игроков
+        const roles = ['mafia', 'sheriff', 'civilian', 'civilian', 'civilian'];
+        
+        // DOM элементы
+        const lobbyScreen = document.getElementById('lobbyScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const playerNameInput = document.getElementById('playerName');
+        const joinBtn = document.getElementById('joinBtn');
+        const startBtn = document.getElementById('startBtn');
+        const playerList = document.getElementById('playerList');
+        const playerCount = document.getElementById('playerCount');
+        const gamePlayerCount = document.getElementById('gamePlayerCount');
+        const dayCount = document.getElementById('dayCount');
+        const phaseDisplay = document.getElementById('phaseDisplay');
+        const playerRole = document.getElementById('playerRole');
+        const playerStatus = document.getElementById('playerStatus');
+        const actionDescription = document.getElementById('actionDescription');
+        const actionButtons = document.getElementById('actionButtons');
+        const gameLog = document.getElementById('gameLog');
+        const resultPlayerList = document.getElementById('resultPlayerList');
+        const winnerTitle = document.getElementById('winnerTitle');
+        const restartBtn = document.getElementById('restartBtn');
+        
+        // Перевод ролей
+        const roleTranslations = {
+            'mafia': 'Мафия',
+            'sheriff': 'Шериф',
+            'civilian': 'Мирный житель'
+        };
+        
+        // Инициализация игры
+        function initGame() {
+            joinBtn.addEventListener('click', joinLobby);
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+            
+            // Авто-заполнение для демонстрации
+            playerNameInput.value = 'Игрок' + (Math.floor(Math.random() * 100));
+        }
+        
+        // Присоединение к лобби
+        function joinLobby() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                alert('Имя должно содержать не менее 2 символов');
+                return;
+            }
+            
+            if (gameState.players.length >= 5) {
+                alert('Лобби заполнено (максимум 5 игроков)');
+                return;
+            }
+            
+            // Добавляем игрока
+            const player = {
+                id: Date.now(),
+                name: name,
+                role: null,
+                status: 'alive',
+                ready: false
+            };
+            
+            gameState.players.push(player);
+            updateLobby();
+            
+            // Автоматически отмечаем готовность после присоединения
+            player.ready = true;
+            updateLobby();
+            
+            // Если игроков 5, активируем кнопку старта
+            if (gameState.players.length === 5) {
+                startBtn.disabled = false;
+            }
+        }
+        
+        // Обновление лобби
+        function updateLobby() {
+            playerList.innerHTML = '';
+            playerCount.textContent = gameState.players.length;
+            
+            gameState.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.ready ? 'ready' : ''}`;
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-status">${player.ready ? 'Готов' : 'Ожидание...'}</div>
+                `;
+                playerList.appendChild(playerCard);
+            });
+        }
+        
+        // Начало игры
+        function startGame() {
+            // Перемешиваем роли
+            shuffleRoles();
+            
+            // Назначаем роли
+            assignRoles();
+            
+            // Переключаем на экран игры
+            lobbyScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+            
+            // Устанавливаем первого игрока
+            gameState.currentPlayer = gameState.players[0];
+            gameState.currentPlayerRole = gameState.currentPlayer.role;
+            
+            // Обновляем игровое состояние
+            updateGameScreen();
+            
+            // Добавляем лог
+            addLog('Игра началась! Наступает ночь...');
+        }
+        
+        // Перемешивание ролей
+        function shuffleRoles() {
+            for (let i = roles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [roles[i], roles[j]] = [roles[j], roles[i]];
+            }
+        }
+        
+        // Назначение ролей игрокам
+        function assignRoles() {
+            gameState.players.forEach((player, index) => {
+                player.role = roles[index];
+            });
+        }
+        
+        // Обновление игрового экрана
+        function updateGameScreen() {
+            gamePlayerCount.textContent = gameState.players.filter(p => p.status === 'alive').length;
+            dayCount.textContent = gameState.dayCount;
+            
+            // Установка фазы
+            phaseDisplay.textContent = gameState.phase === 'night' ? 'НОЧЬ' : 'ДЕНЬ';
+            phaseDisplay.className = `phase-display ${gameState.phase}`;
+            
+            // Отображение роли текущего игрока
+            playerRole.textContent = roleTranslations[gameState.currentPlayerRole] || 'Роль не определена';
+            playerStatus.textContent = `Статус: ${gameState.playerStatus === 'alive' ? 'жив' : 'мёртв'}`;
+            
+            // Обновление описания действий
+            updateActionDescription();
+            
+            // Обновление логов
+            updateGameLog();
+        }
+        
+        // Обновление описания действий
+        function updateActionDescription() {
+            actionButtons.innerHTML = '';
+            
+            if (gameState.phase === 'night') {
+                if (gameState.currentPlayerRole === 'mafia') {
+                    actionDescription.textContent = 'Выберите игрока для устранения:';
+                    renderPlayerActions('kill');
+                } else if (gameState.currentPlayerRole === 'sheriff') {
+                    actionDescription.textContent = 'Выберите игрока для проверки:';
+                    renderPlayerActions('check');
+                } else {
+                    actionDescription.textContent = 'Вы спите... Наступает ночь.';
+                }
+            } else {
+                actionDescription.textContent = 'Обсудите и выберите игрока для исключения:';
+                renderPlayerActions('vote');
+            }
+        }
+        
+        // Рендер действий с игроками
+        function renderPlayerActions(actionType) {
+            const alivePlayers = gameState.players.filter(p => p.status === 'alive' && p.id !== gameState.currentPlayer.id);
+            
+            alivePlayers.forEach(player => {
+                const btn = document.createElement('button');
+                btn.textContent = player.name;
+                btn.style.margin = '5px';
+                
+                btn.addEventListener('click', () => {
+                    if (actionType === 'kill') {
+                        addLog(`Мафия выбрала ${player.name} для устранения`, 'mafia');
+                    } else if (actionType === 'check') {
+                        addLog(`Шериф проверил ${player.name}. Роль: ${roleTranslations[player.role]}`, 'sheriff');
+                    } else {
+                        addLog(`Голосование против ${player.name}`);
+                    }
+                    
+                    // Переход к следующему игроку
+                    nextPlayer();
+                });
+                
+                actionButtons.appendChild(btn);
+            });
+            
+            // Кнопка пропуска (если нужно)
+            if (actionType !== 'kill') {
+                const skipBtn = document.createElement('button');
+                skipBtn.textContent = 'Пропустить';
+                skipBtn.style.margin = '5px';
+                skipBtn.style.background = '#555';
+                
+                skipBtn.addEventListener('click', () => {
+                    addLog('Действие пропущено');
+                    nextPlayer();
+                });
+                
+                actionButtons.appendChild(skipBtn);
+            }
+        }
+        
+        // Следующий игрок
+        function nextPlayer() {
+            const currentIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer.id);
+            let nextIndex = (currentIndex + 1) % gameState.players.length;
+            
+            // Пропускаем мёртвых игроков
+            while (gameState.players[nextIndex].status !== 'alive') {
+                nextIndex = (nextIndex + 1) % gameState.players.length;
+            }
+            
+            gameState.currentPlayer = gameState.players[nextIndex];
+            gameState.currentPlayerRole = gameState.currentPlayer.role;
+            
+            // Если круг завершён, меняем фазу
+            if (gameState.currentPlayer.id === gameState.players[0].id) {
+                gameState.phase = gameState.phase === 'night' ? 'day' : 'night';
+                
+                if (gameState.phase === 'day') {
+                    addLog('Наступает день. Обсуждение начинается...');
+                } else {
+                    gameState.dayCount++;
+                    addLog('Наступает ночь. Город засыпает...');
+                }
+            }
+            
+            updateGameScreen();
+            checkGameOver();
+        }
+        
+        // Добавление записи в лог
+        function addLog(message, type = '') {
+            gameState.logs.push({message, type, timestamp: new Date()});
+            
+            if (gameState.logs.length > 10) {
+                gameState.logs.shift();
+            }
+            
+            updateGameLog();
+        }
+        
+        // Обновление логов
+        function updateGameLog() {
+            gameLog.innerHTML = '';
+            
+            gameState.logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${log.type ? log.type + '-log' : ''}`;
+                logEntry.textContent = log.message;
+                gameLog.appendChild(logEntry);
+            });
+            
+            // Прокрутка вниз
+            gameLog.scrollTop = gameLog.scrollHeight;
+        }
+        
+        // Проверка окончания игры
+        function checkGameOver() {
+            const alivePlayers = gameState.players.filter(p => p.status === 'alive');
+            const mafiaCount = alivePlayers.filter(p => p.role === 'mafia').length;
+            const civiliansCount = alivePlayers.filter(p => p.role !== 'mafia').length;
+            
+            if (mafiaCount === 0) {
+                endGame('civilians');
+            } else if (mafiaCount >= civiliansCount) {
+                endGame('mafia');
+            }
+        }
+        
+        // Завершение игры
+        function endGame(winner) {
+            gameState.gameOver = true;
+            gameState.winner = winner;
+            
+            // Переключение на экран результатов
+            gameScreen.classList.remove('active');
+            resultScreen.classList.add('active');
+            
+            // Установка заголовка
+            winnerTitle.textContent = winner === 'civilians' 
+                ? 'Победа мирных жителей!' 
+                : 'Победа мафии!';
+            
+            // Отображение результатов игроков
+            resultPlayerList.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.role} ${player.status}`;
+                
+                const roleClass = player.role + '-badge';
+                const roleName = roleTranslations[player.role];
+                
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div>
+                        <span class="role-badge ${roleClass}">${roleName}</span>
+                    </div>
+                    <div class="player-status ${player.status}">
+                        ${player.status === 'alive' ? 'Выжил' : 'Убит'}
+                    </div>
+                `;
+                
+                resultPlayerList.appendChild(playerCard);
+            });
+        }
+        
+        // Перезапуск игры
+        function restartGame() {
+            // Сброс состояния
+            gameState.players = [];
+            gameState.dayCount = 1;
+            gameState.phase = 'night';
+            gameState.gameOver = false;
+            gameState.winner = null;
+            gameState.logs = [];
+            
+            // Переключение на лобби
+            resultScreen.classList.remove('active');
+            lobbyScreen.classList.add('active');
+            
+            // Очистка ввода
+            playerNameInput.value = '';
+            updateLobby();
+        }
+        
+        // Запуск игры при загрузке
+        window.onload = initGame;
+    </script>
+</body>
+</html>
