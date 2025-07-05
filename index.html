@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Онлайн Мафия для смартфонов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            position: relative;
+            border: 1px solid #ffcc0033;
+        }
+        
+        .game-screen {
+            display: none;
+            padding: 15px;
+            min-height: 80vh;
+        }
+        
+        .active {
+            display: block;
+        }
+        
+        header {
+            text-align: center;
+            padding: 15px 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 2px solid #b21f1f;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(178, 31, 31, 0.3) 0%, rgba(0,0,0,0) 70%);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #ffcc00;
+            text-shadow: 0 0 8px rgba(255, 204, 0, 0.7);
+            position: relative;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .join-container, .lobby-container, .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid #444;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #ffcc00;
+            box-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+        }
+        
+        button {
+            padding: 14px;
+            background: linear-gradient(to right, #b21f1f, #8a1c1c);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #c62e2e, #a12222);
+            transform: translateY(-3px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .player-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+        
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .phase-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .night {
+            background: linear-gradient(to right, #1a237e, #283593);
+        }
+        
+        .day {
+            background: linear-gradient(to right, #c62828, #b71c1c);
+        }
+        
+        .action-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .action-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .action-title {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #ffcc00;
+        }
+        
+        .log-container {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+        
+        .log-title {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #ffcc00;
+        }
+        
+        .log-entry {
+            padding: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+        }
+        
+        .mafia-log {
+            color: #ff6b6b;
+        }
+        
+        .sheriff-log {
+            color: #4dabf7;
+        }
+        
+        .game-over {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .winner-title {
+            font-size: 1.5rem;
+            color: #ffcc00;
+            margin-bottom: 15px;
+            text-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+        
+        .mafia-badge {
+            background: #b21f1f;
+        }
+        
+        .sheriff-badge {
+            background: #ffcc00;
+            color: black;
+        }
+        
+        .civilian-badge {
+            background: #4CAF50;
+        }
+        
+        .player-status {
+            font-size: 0.7rem;
+            margin-top: 3px;
+        }
+        
+        .room-info {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .room-id {
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .copy-btn {
+            padding: 6px 10px;
+            background: #444;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions h3 {
+            color: #ffcc00;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .instructions ul {
+            padding-left: 18px;
+        }
+        
+        .instructions li {
+            margin-bottom: 6px;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            font-size: 0.9rem;
+        }
+        
+        .tutorial-screen {
+            display: none;
+            padding: 20px 15px;
+        }
+        
+        .tutorial-content {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 40px;
+            border: 1px solid #ffcc00;
+        }
+        
+        .tutorial-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .tutorial-header h2 {
+            color: #ffcc00;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .tutorial-step {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .tutorial-step.active {
+            display: block;
+        }
+        
+        .tutorial-step h3 {
+            color: #4dabf7;
+            margin: 15px 0 10px;
+        }
+        
+        .tutorial-step p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .tutorial-role {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #ffcc00;
+        }
+        
+        .tutorial-role h4 {
+            color: #ffcc00;
+            margin-bottom: 8px;
+        }
+        
+        .tutorial-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .tutorial-buttons button {
+            flex: 1;
+            background: #444;
+        }
+        
+        .tutorial-buttons button.primary {
+            background: linear-gradient(to right, #b21f1f, #8a1c1c);
+        }
+        
+        .demo-game {
+            border: 2px dashed #ffcc00;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        
+        .demo-game h3 {
+            text-align: center;
+            color: #ffcc00;
+            margin-bottom: 15px;
+        }
+        
+        .demo-player-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .demo-player {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            width: 100px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .demo-player .role {
+            font-size: 0.7rem;
+            color: #ffcc00;
+            margin-top: 5px;
+        }
+        
+        .demo-player .status {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.7rem;
+            color: #ff6b6b;
+        }
+        
+        .demo-player.alive .status {
+            color: #4CAF50;
+        }
+        
+        .demo-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .demo-actions button {
+            width: auto;
+            padding: 8px 15px;
+        }
+        
+        .demo-log {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            max-height: 100px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+        
+        .demo-log-entry {
+            padding: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .firebase-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 100, 0, 0.5);
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            z-index: 5;
+        }
+        
+        .firebase-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            box-shadow: 0 0 8px #4CAF50;
+        }
+        
+        .rooms-container {
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .rooms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .rooms-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .room-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .room-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .room-name {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #ffcc00;
+        }
+        
+        .room-details {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+        
+        .join-room-btn {
+            padding: 8px 15px;
+            background: #4CAF50;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .no-rooms {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.6rem;
+                padding: 0 10px;
+            }
+            
+            .subtitle {
+                font-size: 0.8rem;
+            }
+            
+            button {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+            
+            .player-list {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            }
+            
+            .phase-display {
+                font-size: 1rem;
+                padding: 10px;
+            }
+            
+            .action-title {
+                font-size: 1rem;
+            }
+            
+            .log-container {
+                max-height: 120px;
+            }
+            
+            .room-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .join-room-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="firebaseStatus" class="firebase-status">
+            <i class="fas fa-database"></i> Firebase Offline
+        </div>
+        
+        <header>
+            <h1><i class="fas fa-user-secret"></i> МАФИЯ ДЛЯ СМАРТФОНОВ</h1>
+            <div class="subtitle">Играйте с друзьями в любом месте</div>
+        </header>
+        
+        <!-- Экран входа -->
+        <div id="joinScreen" class="game-screen active">
+            <div class="join-container">
+                <div class="input-group">
+                    <input type="text" id="playerName" placeholder="Введите ваше имя" maxlength="15" value="Игрок">
+                    <button id="quickJoinBtn">Быстрое присоединение</button>
+                    <button id="showLobbyBtn">Показать лобби</button>
+                    <button id="tutorialBtn">Обучение игре</button>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-info-circle"></i> Как играть:</h3>
+                    <ul>
+                        <li><strong>Быстрое присоединение:</strong> Игра найдет вам комнату</li>
+                        <li><strong>Лобби:</strong> Выберите комнату из списка или создайте свою</li>
+                        <li><strong>Роли:</strong> Мафия, Шериф и Мирные жители</li>
+                        <li><strong>Ночь:</strong> Мафия выбирает жертву, Шериф проверяет игроков</li>
+                        <li><strong>День:</strong> Обсуждение и голосование</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Лобби -->
+        <div id="lobbyScreen" class="game-screen">
+            <div class="back-btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i> Назад
+            </div>
+            
+            <div class="lobby-container">
+                <h2>Доступные комнаты</h2>
+                
+                <div class="search-container">
+                    <input type="text" id="searchRoom" placeholder="Поиск комнат...">
+                    <button id="refreshRoomsBtn"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                
+                <div class="rooms-container">
+                    <div class="rooms-list" id="roomsList">
+                        <div class="no-rooms">Загрузка комнат...</div>
+                    </div>
+                </div>
+                
+                <button id="createRoomBtn"><i class="fas fa-plus"></i> Создать комнату</button>
+            </div>
+        </div>
+        
+        <!-- Комнатное лобби -->
+        <div id="roomLobbyScreen" class="game-screen">
+            <div class="back-btn" id="backToMainLobbyBtn">
+                <i class="fas fa-arrow-left"></i> В лобби
+            </div>
+            
+            <div class="lobby-container">
+                <div class="room-info">
+                    <div>ID комнаты: <span id="roomId" class="room-id">MAF-0000</span></div>
+                    <div class="copy-btn" id="copyBtn"><i class="fas fa-copy"></i> Копировать</div>
+                </div>
+                
+                <div class="game-info">
+                    <div>Игроков: <span id="playerCount">0</span>/5</div>
+                    <div>Статус: <span id="lobbyStatus">Ожидание игроков</span></div>
+                </div>
+                
+                <div class="player-list" id="playerList">
+                    <!-- Игроки будут добавляться здесь -->
+                </div>
+                
+                <button id="startBtn" disabled>Начать игру</button>
+            </div>
+        </div>
+        
+        <!-- Игровой экран -->
+        <div id="gameScreen" class="game-screen">
+            <div class="back-btn" id="backToLobbyBtn">
+                <i class="fas fa-arrow-left"></i> В лобби
+            </div>
+            
+            <div class="game-info">
+                <div>Игроков: <span id="gamePlayerCount">0</span>/5</div>
+                <div>День: <span id="dayCount">1</span></div>
+                <div>Комната: <span id="gameRoomId" class="room-id">MAF-0000</span></div>
+            </div>
+            
+            <div id="phaseDisplay" class="phase-display night">НОЧЬ</div>
+            
+            <div class="action-container">
+                <div class="action-card">
+                    <div class="action-title">Ваша роль</div>
+                    <div id="playerRole">Ожидание...</div>
+                    <div id="playerStatus" class="player-status alive">Статус: жив</div>
+                </div>
+                
+                <div class="action-card">
+                    <div class="action-title">Ваше действие</div>
+                    <div id="actionDescription">Ожидайте начала игры...</div>
+                    <div id="actionButtons" style="margin-top: 10px;"></div>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                <div class="log-title"><i class="fas fa-scroll"></i> События игры</div>
+                <div id="gameLog">
+                    <div class="log-entry">Игра началась. Наступает ночь...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Экран результатов -->
+        <div id="resultScreen" class="game-screen">
+            <div class="game-over">
+                <div id="winnerTitle" class="winner-title">Победа мирных жителей!</div>
+                <div class="player-list" id="resultPlayerList">
+                    <!-- Результаты игроков будут здесь -->
+                </div>
+                <button id="restartBtn"><i class="fas fa-redo"></i> Создать новую игру</button>
+            </div>
+        </div>
+        
+        <!-- Экран обучения -->
+        <div id="tutorialScreen" class="tutorial-screen">
+            <div class="back-btn" id="backFromTutorialBtn">
+                <i class="fas fa-arrow-left"></i> Назад
+            </div>
+            
+            <div class="tutorial-content">
+                <div class="tutorial-header">
+                    <h2><i class="fas fa-graduation-cap"></i> Обучение игре "Мафия"</h2>
+                    <p>Изучите правила и попрактикуйтесь в демо-режиме</p>
+                </div>
+                
+                <div class="tutorial-step active" id="step1">
+                    <h3>Цель игры</h3>
+                    <p>Мирные жители должны выявить и устранить мафию, а мафия должна устранить всех мирных жителей.</p>
+                    
+                    <h3>Роли игроков</h3>
+                    
+                    <div class="tutorial-role">
+                        <h4><i class="fas fa-user-ninja"></i> Мафия</h4>
+                        <p>Знает других членов мафии. Ночью выбирает жертву для устранения.</p>
+                    </div>
+                    
+                    <div class="tutorial-role">
+                        <h4><i class="fas fa-user-shield"></i> Шериф</h4>
+                        <p>Мирный житель, который ночью может проверить любого игрока на принадлежность к мафии.</p>
+                    </div>
+                    
+                    <div class="tutorial-role">
+                        <h4><i class="fas fa-user"></i> Мирные жители</h4>
+                        <p>Не знают ролей других игроков. Днём участвуют в обсуждении и голосовании.</p>
+                    </div>
+                    
+                    <div class="tutorial-buttons">
+                        <button id="nextStep1">Далее</button>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step" id="step2">
+                    <h3>Фазы игры</h3>
+                    
+                    <div class="tutorial-role" style="border-left-color: #283593;">
+                        <h4><i class="fas fa-moon"></i> Ночь</h4>
+                        <p>Все игроки "засыпают". Мафия просыпается и выбирает жертву. Шериф проверяет одного игрока.</p>
+                    </div>
+                    
+                    <div class="tutorial-role" style="border-left-color: #c62828;">
+                        <h4><i class="fas fa-sun"></i> День</h4>
+                        <p>Все игроки просыпаются. Объявляется жертва мафии (если была). Игроки обсуждают и голосуют за подозреваемого.</p>
+                    </div>
+                    
+                    <h3>Как победить?</h3>
+                    <p><strong>Мирные жители:</strong> Устранить всех членов мафии.</p>
+                    <p><strong>Мафия:</strong> Добиться численного равенства с мирными жителями.</p>
+                    
+                    <div class="tutorial-buttons">
+                        <button id="prevStep2">Назад</button>
+                        <button id="nextStep2" class="primary">Попробовать демо</button>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step" id="step3">
+                    <h3>Демо-режим</h3>
+                    <p>Попробуйте сыграть в упрощённой версии игры с бот-игроками:</p>
+                    
+                    <div class="demo-game">
+                        <h3>Демо-игра "Мафия"</h3>
+                        
+                        <div class="demo-player-list">
+                            <div class="demo-player alive">
+                                <div class="name">Вы (Шериф)</div>
+                                <div class="role">Шериф</div>
+                                <div class="status alive">жив</div>
+                            </div>
+                            <div class="demo-player alive">
+                                <div class="name">Алексей</div>
+                                <div class="role">Мирный</div>
+                                <div class="status alive">жив</div>
+                            </div>
+                            <div class="demo-player alive">
+                                <div class="name">Мария</div>
+                                <div class="role">Мафия</div>
+                                <div class="status alive">жив</div>
+                            </div>
+                        </div>
+                        
+                        <div class="phase-display night">НОЧЬ</div>
+                        
+                        <div class="action-container">
+                            <div class="action-card">
+                                <div class="action-title">Ваше действие (Шериф)</div>
+                                <p>Выберите игрока для проверки на принадлежность к мафии:</p>
+                                <div class="demo-actions">
+                                    <button id="checkAlex">Проверить Алексея</button>
+                                    <button id="checkMaria">Проверить Марию</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-log">
+                            <div class="demo-log-entry">Ночь. Город засыпает...</div>
+                            <div class="demo-log-entry">Мафия выбирает жертву...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-buttons">
+                        <button id="prevStep3">Назад</button>
+                        <button id="startDemoBtn" class="primary">Начать демо-игру</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (загружается только при реальной игре) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <script>
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrOAhG2hQphTC8xmI_L1HD835Z101GPAI",
+            authDomain: "grean-mafia.firebaseapp.com",
+            databaseURL: "https://grean-mafia-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "grean-mafia",
+            storageBucket: "grean-mafia.firebasestorage.app",
+            messagingSenderId: "603308315781",
+            appId: "1:603308315781:web:053d9551ed6516477905ec"
+        };
+        
+        // Инициализация Firebase
+        let firebaseApp;
+        let database;
+        
+        // Состояние игры
+        let gameState = {
+            roomId: '',
+            players: [],
+            currentPlayer: null,
+            dayCount: 1,
+            phase: 'night',
+            gameOver: false,
+            winner: null,
+            logs: [],
+            isDemo: false
+        };
+        
+        // Текущий игрок
+        let currentPlayer = {
+            id: null,
+            name: '',
+            role: null,
+            status: 'alive',
+            isHost: false
+        };
+        
+        // Роли
+        const roles = ['mafia', 'sheriff', 'civilian', 'civilian', 'civilian'];
+        
+        // DOM элементы
+        const joinScreen = document.getElementById('joinScreen');
+        const lobbyScreen = document.getElementById('lobbyScreen');
+        const roomLobbyScreen = document.getElementById('roomLobbyScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const tutorialScreen = document.getElementById('tutorialScreen');
+        const playerNameInput = document.getElementById('playerName');
+        const quickJoinBtn = document.getElementById('quickJoinBtn');
+        const showLobbyBtn = document.getElementById('showLobbyBtn');
+        const tutorialBtn = document.getElementById('tutorialBtn');
+        const startBtn = document.getElementById('startBtn');
+        const playerList = document.getElementById('playerList');
+        const playerCount = document.getElementById('playerCount');
+        const gamePlayerCount = document.getElementById('gamePlayerCount');
+        const dayCount = document.getElementById('dayCount');
+        const phaseDisplay = document.getElementById('phaseDisplay');
+        const playerRole = document.getElementById('playerRole');
+        const playerStatus = document.getElementById('playerStatus');
+        const actionDescription = document.getElementById('actionDescription');
+        const actionButtons = document.getElementById('actionButtons');
+        const gameLog = document.getElementById('gameLog');
+        const resultPlayerList = document.getElementById('resultPlayerList');
+        const winnerTitle = document.getElementById('winnerTitle');
+        const restartBtn = document.getElementById('restartBtn');
+        const roomIdElement = document.getElementById('roomId');
+        const gameRoomId = document.getElementById('gameRoomId');
+        const copyBtn = document.getElementById('copyBtn');
+        const backBtn = document.getElementById('backBtn');
+        const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+        const backToMainLobbyBtn = document.getElementById('backToMainLobbyBtn');
+        const backFromTutorialBtn = document.getElementById('backFromTutorialBtn');
+        const lobbyStatus = document.getElementById('lobbyStatus');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const firebaseStatus = document.getElementById('firebaseStatus');
+        const roomsList = document.getElementById('roomsList');
+        const searchRoom = document.getElementById('searchRoom');
+        const refreshRoomsBtn = document.getElementById('refreshRoomsBtn');
+        
+        // Элементы обучения
+        const nextStep1 = document.getElementById('nextStep1');
+        const prevStep2 = document.getElementById('prevStep2');
+        const nextStep2 = document.getElementById('nextStep2');
+        const prevStep3 = document.getElementById('prevStep3');
+        const startDemoBtn = document.getElementById('startDemoBtn');
+        const checkAlex = document.getElementById('checkAlex');
+        const checkMaria = document.getElementById('checkMaria');
+        
+        // Перевод ролей
+        const roleTranslations = {
+            'mafia': 'Мафия',
+            'sheriff': 'Шериф',
+            'civilian': 'Мирный житель'
+        };
+        
+        // Список комнат
+        let availableRooms = [];
+        
+        // Инициализация игры
+        function initGame() {
+            // Обработчики событий
+            quickJoinBtn.addEventListener('click', quickJoin);
+            showLobbyBtn.addEventListener('click', showLobby);
+            tutorialBtn.addEventListener('click', showTutorial);
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+            copyBtn.addEventListener('click', copyRoomId);
+            backBtn.addEventListener('click', goBackToJoinScreen);
+            backToLobbyBtn.addEventListener('click', goBackToRoomLobby);
+            backToMainLobbyBtn.addEventListener('click', goBackToMainLobby);
+            backFromTutorialBtn.addEventListener('click', goBackFromTutorial);
+            createRoomBtn.addEventListener('click', createRoom);
+            refreshRoomsBtn.addEventListener('click', loadRooms);
+            searchRoom.addEventListener('input', filterRooms);
+            
+            // Обработчики обучения
+            nextStep1.addEventListener('click', () => switchTutorialStep(2));
+            nextStep2.addEventListener('click', () => switchTutorialStep(3));
+            prevStep2.addEventListener('click', () => switchTutorialStep(1));
+            prevStep3.addEventListener('click', () => switchTutorialStep(2));
+            startDemoBtn.addEventListener('click', createDemoRoom);
+            
+            // Авто-заполнение для демонстрации
+            playerNameInput.value = 'Игрок' + Math.floor(Math.random() * 100);
+        }
+        
+        // Инициализация Firebase
+        function initFirebase() {
+            try {
+                firebaseApp = firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                firebaseStatus.innerHTML = '<i class="fas fa-database"></i> Firebase Online';
+                firebaseStatus.style.background = 'rgba(0, 100, 0, 0.5)';
+                return true;
+            } catch (e) {
+                console.error('Firebase initialization error:', e);
+                firebaseStatus.innerHTML = '<i class="fas fa-database"></i> Firebase Offline';
+                firebaseStatus.style.background = 'rgba(100, 0, 0, 0.5)';
+                return false;
+            }
+        }
+        
+        // Загрузка списка комнат
+        function loadRooms() {
+            roomsList.innerHTML = '<div class="no-rooms">Загрузка комнат...</div>';
+            
+            if (!database) {
+                if (!initFirebase()) {
+                    roomsList.innerHTML = '<div class="no-rooms">Ошибка подключения к серверу</div>';
+                    return;
+                }
+            }
+            
+            const roomsRef = database.ref('rooms');
+            roomsRef.once('value').then(snapshot => {
+                availableRooms = [];
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach(roomSnapshot => {
+                        const roomData = roomSnapshot.val();
+                        
+                        // Проверяем, что комната в лобби и не заполнена
+                        if (roomData.phase === 'lobby' && roomData.players && roomData.players.length < 5) {
+                            availableRooms.push({
+                                id: roomSnapshot.key,
+                                players: roomData.players.length,
+                                maxPlayers: 5
+                            });
+                        }
+                    });
+                }
+                
+                renderRoomsList();
+            }).catch(error => {
+                console.error('Ошибка загрузки комнат:', error);
+                roomsList.innerHTML = '<div class="no-rooms">Ошибка загрузки комнат</div>';
+            });
+        }
+        
+        // Фильтрация комнат
+        function filterRooms() {
+            const searchTerm = searchRoom.value.toLowerCase();
+            renderRoomsList(searchTerm);
+        }
+        
+        // Отображение списка комнат
+        function renderRoomsList(filter = '') {
+            roomsList.innerHTML = '';
+            
+            if (availableRooms.length === 0) {
+                roomsList.innerHTML = '<div class="no-rooms">Нет доступных комнат</div>';
+                return;
+            }
+            
+            const filteredRooms = availableRooms.filter(room => 
+                room.id.toLowerCase().includes(filter)
+            );
+            
+            if (filteredRooms.length === 0) {
+                roomsList.innerHTML = '<div class="no-rooms">Комнаты не найдены</div>';
+                return;
+            }
+            
+            filteredRooms.forEach(room => {
+                const roomItem = document.createElement('div');
+                roomItem.className = 'room-item';
+                roomItem.innerHTML = `
+                    <div class="room-info">
+                        <div class="room-name">${room.id}</div>
+                        <div class="room-details">
+                            <span><i class="fas fa-users"></i> ${room.players}/${room.maxPlayers}</span>
+                            <span><i class="fas fa-hourglass-half"></i> Ожидание</span>
+                        </div>
+                    </div>
+                    <div class="join-room-btn" data-room="${room.id}">Присоединиться</div>
+                `;
+                roomsList.appendChild(roomItem);
+                
+                // Добавляем обработчик для кнопки присоединения
+                roomItem.querySelector('.join-room-btn').addEventListener('click', (e) => {
+                    joinRoom(e.target.getAttribute('data-room'));
+                });
+            });
+        }
+        
+        // Переключение шагов обучения
+        function switchTutorialStep(step) {
+            document.querySelectorAll('.tutorial-step').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(`step${step}`).classList.add('active');
+        }
+        
+        // Показать обучение
+        function showTutorial() {
+            joinScreen.classList.remove('active');
+            tutorialScreen.classList.add('active');
+            switchTutorialStep(1);
+        }
+        
+        // Вернуться из обучения
+        function goBackFromTutorial() {
+            tutorialScreen.classList.remove('active');
+            joinScreen.classList.add('active');
+        }
+        
+        // Быстрое присоединение к игре
+        function quickJoin() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                alert('Имя должно содержать не менее 2 символов');
+                return;
+            }
+            
+            // Создаем игрока
+            const playerId = generatePlayerId();
+            currentPlayer = {
+                id: playerId,
+                name: name,
+                role: null,
+                status: 'alive',
+                isHost: false
+            };
+            
+            // Создаем демо-комнату
+            createDemoRoom();
+        }
+        
+        // Показать лобби
+        function showLobby() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                alert('Имя должно содержать не менее 2 символов');
+                return;
+            }
+            
+            // Создаем игрока
+            currentPlayer = {
+                id: generatePlayerId(),
+                name: name,
+                role: null,
+                status: 'alive',
+                isHost: false
+            };
+            
+            // Переключаемся на лобби
+            joinScreen.classList.remove('active');
+            lobbyScreen.classList.add('active');
+            
+            // Загружаем комнаты
+            loadRooms();
+        }
+        
+        // Создание комнаты (с использованием Firebase)
+        function createRoom() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                alert('Имя должно содержать не менее 2 символов');
+                return;
+            }
+            
+            // Инициализируем Firebase
+            if (!initFirebase()) {
+                alert('Не удалось подключиться к серверу. Попробуйте позже.');
+                return;
+            }
+            
+            // Генерируем ID комнаты
+            const roomId = 'MAF-' + Math.floor(1000 + Math.random() * 9000);
+            
+            // Создаем игрока (хоста)
+            const playerId = generatePlayerId();
+            currentPlayer = {
+                id: playerId,
+                name: name,
+                role: null,
+                status: 'alive',
+                isHost: true
+            };
+            
+            // Инициализируем состояние игры
+            gameState = {
+                roomId: roomId,
+                players: [currentPlayer],
+                currentPlayer: null,
+                dayCount: 1,
+                phase: 'lobby',
+                gameOver: false,
+                winner: null,
+                logs: [{message: `Комната создана. ${name} присоединился как создатель.`, timestamp: Date.now()}],
+                isDemo: false
+            };
+            
+            // Сохраняем состояние в Firebase
+            saveGameState();
+            
+            // Обновляем интерфейс
+            roomIdElement.textContent = roomId;
+            gameRoomId.textContent = roomId;
+            
+            // Переключаемся на комнатное лобби
+            lobbyScreen.classList.remove('active');
+            roomLobbyScreen.classList.add('active');
+            
+            // Обновляем лобби
+            updateRoomLobby();
+            
+            // Слушаем изменения в Firebase
+            listenForGameChanges();
+        }
+        
+        // Присоединение к комнате
+        function joinRoom(roomId) {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                alert('Имя должно содержать не менее 2 символов');
+                return;
+            }
+            
+            // Инициализируем Firebase
+            if (!initFirebase()) {
+                alert('Не удалось подключиться к серверу. Попробуйте позже.');
+                return;
+            }
+            
+            // Создаем игрока
+            const playerId = generatePlayerId();
+            currentPlayer = {
+                id: playerId,
+                name: name,
+                role: null,
+                status: 'alive',
+                isHost: false
+            };
+            
+            // Загружаем состояние игры из Firebase
+            loadGameState(roomId);
+        }
+        
+        // Загрузка состояния игры
+        function loadGameState(roomId) {
+            const gameRef = database.ref(`rooms/${roomId}`);
+            gameRef.once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    gameState = snapshot.val();
+                    
+                    // Проверяем, не заполнена ли комната
+                    if (gameState.players.length >= 5) {
+                        alert('Комната заполнена');
+                        return;
+                    }
+                    
+                    // Проверяем, не занято ли имя
+                    const nameExists = gameState.players.some(p => p.name === currentPlayer.name);
+                    if (nameExists) {
+                        alert('Имя уже занято');
+                        return;
+                    }
+                    
+                    // Добавляем игрока
+                    gameState.players.push(currentPlayer);
+                    
+                    addLog(`${currentPlayer.name} присоединился к игре.`);
+                    saveGameState();
+                    
+                    // Обновляем интерфейс
+                    roomIdElement.textContent = gameState.roomId;
+                    gameRoomId.textContent = gameState.roomId;
+                    
+                    // Переключаемся на комнатное лобби
+                    lobbyScreen.classList.remove('active');
+                    roomLobbyScreen.classList.add('active');
+                    
+                    // Обновляем лобби
+                    updateRoomLobby();
+                    
+                    // Слушаем изменения в Firebase
+                    listenForGameChanges();
+                } else {
+                    alert('Комната не найдена');
+                }
+            }).catch(error => {
+                console.error('Ошибка загрузки комнаты:', error);
+                alert('Не удалось подключиться к комнате');
+            });
+        }
+        
+        // Создание демо-комнаты (без Firebase)
+        function createDemoRoom() {
+            const roomId = 'DEMO-ROOM';
+            
+            // Инициализируем состояние игры
+            gameState = {
+                roomId: roomId,
+                players: [
+                    currentPlayer,
+                    {id: 'bot1', name: 'Алексей', role: 'civilian', status: 'alive', isHost: false},
+                    {id: 'bot2', name: 'Мария', role: 'mafia', status: 'alive', isHost: false}
+                ],
+                currentPlayer: currentPlayer.id,
+                dayCount: 1,
+                phase: 'night',
+                gameOver: false,
+                winner: null,
+                logs: [
+                    {message: `Демо-игра началась. Наступает ночь...`, timestamp: Date.now()},
+                    {message: `Вы - Шериф. Проверьте одного из игроков.`, timestamp: Date.now()}
+                ],
+                isDemo: true
+            };
+            
+            // Назначаем роль текущему игроку
+            currentPlayer.role = 'sheriff';
+            
+            // Обновляем интерфейс
+            roomIdElement.textContent = roomId;
+            gameRoomId.textContent = roomId;
+            
+            // Переключаемся на игровой экран
+            tutorialScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+            
+            // Обновляем игровой экран
+            updateGameScreen();
+        }
+        
+        // Генерация ID игрока
+        function generatePlayerId() {
+            return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        }
+        
+        // Сохранение состояния игры в Firebase
+        function saveGameState() {
+            if (!database || gameState.isDemo) return;
+            
+            const gameRef = database.ref(`rooms/${gameState.roomId}`);
+            gameRef.set(gameState);
+        }
+        
+        // Прослушивание изменений в игре (Firebase)
+        function listenForGameChanges() {
+            if (!database || gameState.isDemo) return;
+            
+            const gameRef = database.ref(`rooms/${gameState.roomId}`);
+            gameRef.on('value', snapshot => {
+                if (snapshot.exists()) {
+                    gameState = snapshot.val();
+                    
+                    // Обновляем интерфейс в зависимости от экрана
+                    if (roomLobbyScreen.classList.contains('active')) {
+                        updateRoomLobby();
+                    } else if (gameScreen.classList.contains('active')) {
+                        updateGameScreen();
+                    } else if (resultScreen.classList.contains('active')) {
+                        updateResultScreen();
+                    }
+                    
+                    // Если игра началась, переключаем на игровой экран
+                    if (gameState.phase !== 'lobby' && roomLobbyScreen.classList.contains('active')) {
+                        roomLobbyScreen.classList.remove('active');
+                        gameScreen.classList.add('active');
+                        updateGameScreen();
+                    }
+                    
+                    // Если игра завершена, переключаем на экран результатов
+                    if (gameState.gameOver && gameScreen.classList.contains('active')) {
+                        gameScreen.classList.remove('active');
+                        resultScreen.classList.add('active');
+                        updateResultScreen();
+                    }
+                }
+            });
+        }
+        
+        // Обновление комнатного лобби
+        function updateRoomLobby() {
+            playerList.innerHTML = '';
+            
+            // Подсчет игроков
+            let playerCountValue = gameState.players.length;
+            playerCount.textContent = playerCountValue;
+            
+            // Обновляем статус лобби
+            if (playerCountValue === 0) {
+                lobbyStatus.textContent = 'Ожидание игроков';
+            } else if (playerCountValue < 5) {
+                lobbyStatus.textContent = `Ожидание игроков (${5 - playerCountValue} из 5)`;
+            } else {
+                lobbyStatus.textContent = 'Лобби заполнено!';
+            }
+            
+            // Активируем кнопку старта для любого игрока (если достаточно игроков)
+            startBtn.disabled = !(playerCountValue >= 3);
+            
+            // Отображаем игроков
+            gameState.players.forEach(player => {
+                addPlayerToLobby(player);
+            });
+        }
+        
+        // Добавление игрока в лобби
+        function addPlayerToLobby(player) {
+            const playerCard = document.createElement('div');
+            playerCard.className = `player-card ${player.isHost ? 'host' : ''}`;
+            
+            let playerInfo = `<div class="player-name">${player.name}</div>`;
+            if (player.isHost) {
+                playerInfo += `<div class="player-status"><i class="fas fa-crown"></i> Создатель</div>`;
+            } else {
+                playerInfo += `<div class="player-status">Готов</div>`;
+            }
+            
+            playerCard.innerHTML = playerInfo;
+            playerList.appendChild(playerCard);
+        }
+        
+        // Начало игры
+        function startGame() {
+            // Перемешиваем роли
+            shuffleRoles();
+            
+            // Назначаем роли
+            assignRoles();
+            
+            // Устанавливаем первого игрока
+            gameState.currentPlayer = gameState.players[0].id;
+            gameState.phase = 'night';
+            gameState.logs = [{message: 'Игра началась! Наступает ночь...', timestamp: Date.now()}];
+            
+            // Сохраняем состояние
+            saveGameState();
+        }
+        
+        // Перемешивание ролей
+        function shuffleRoles() {
+            const shuffledRoles = [...roles];
+            for (let i = shuffledRoles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledRoles[i], shuffledRoles[j]] = [shuffledRoles[j], shuffledRoles[i]];
+            }
+            
+            // Назначаем роли игрокам
+            gameState.players.forEach((player, index) => {
+                player.role = index < shuffledRoles.length ? shuffledRoles[index] : 'civilian';
+            });
+        }
+        
+        // Обновление игрового экрана
+        function updateGameScreen() {
+            // Находим текущего игрока в состоянии
+            const player = gameState.players.find(p => p.id === currentPlayer.id);
+            if (!player) return;
+            
+            // Подсчет живых игроков
+            const alivePlayers = gameState.players.filter(p => p.status === 'alive').length;
+            gamePlayerCount.textContent = alivePlayers;
+            dayCount.textContent = gameState.dayCount;
+            
+            // Установка фазы
+            phaseDisplay.textContent = gameState.phase === 'night' ? 'НОЧЬ' : 'ДЕНЬ';
+            phaseDisplay.className = `phase-display ${gameState.phase}`;
+            
+            // Отображение роли текущего игрока
+            playerRole.textContent = roleTranslations[player.role] || 'Роль не определена';
+            playerStatus.textContent = `Статус: ${player.status === 'alive' ? 'жив' : 'мёртв'}`;
+            playerStatus.className = `player-status ${player.status}`;
+            
+            // Обновление описания действий
+            updateActionDescription(player);
+            
+            // Обновление логов
+            updateGameLog();
+        }
+        
+        // Обновление описания действий
+        function updateActionDescription(player) {
+            actionButtons.innerHTML = '';
+            
+            // Если игрок мертв
+            if (player.status !== 'alive') {
+                actionDescription.textContent = 'Вы мертвы и не можете действовать.';
+                return;
+            }
+            
+            if (gameState.phase === 'night') {
+                if (player.role === 'mafia') {
+                    actionDescription.textContent = 'Выберите игрока для устранения:';
+                    renderPlayerActions('kill', player);
+                } else if (player.role === 'sheriff') {
+                    actionDescription.textContent = 'Выберите игрока для проверки:';
+                    renderPlayerActions('check', player);
+                } else {
+                    actionDescription.textContent = 'Вы спите... Наступает ночь.';
+                }
+            } else {
+                actionDescription.textContent = 'Обсудите и выберите игрока для исключения:';
+                renderPlayerActions('vote', player);
+            }
+        }
+        
+        // Рендер действий с игроками
+        function renderPlayerActions(actionType, currentPlayer) {
+            // Получаем список живых игроков (кроме текущего)
+            const alivePlayers = gameState.players.filter(p => 
+                p.status === 'alive' && p.id !== currentPlayer.id
+            );
+            
+            alivePlayers.forEach(player => {
+                const btn = document.createElement('button');
+                btn.textContent = player.name;
+                btn.style.margin = '5px';
+                
+                btn.addEventListener('click', () => {
+                    // Добавляем действие в лог
+                    if (actionType === 'kill') {
+                        addLog(`${currentPlayer.name} (мафия) выбрал(а) ${player.name} для устранения`, 'mafia');
+                    } else if (actionType === 'check') {
+                        addLog(`${currentPlayer.name} (шериф) проверил(а) ${player.name}. Роль: ${roleTranslations[player.role]}`, 'sheriff');
+                    } else {
+                        addLog(`${currentPlayer.name} проголосовал(а) против ${player.name}`);
+                    }
+                    
+                    // Переходим к следующему игроку
+                    nextPlayer();
+                });
+                
+                actionButtons.appendChild(btn);
+            });
+            
+            // Кнопка пропуска
+            if (actionType !== 'kill' && actionType !== 'check') {
+                const skipBtn = document.createElement('button');
+                skipBtn.textContent = 'Пропустить';
+                skipBtn.style.margin = '5px';
+                skipBtn.style.background = '#555';
+                
+                skipBtn.addEventListener('click', () => {
+                    addLog(`${currentPlayer.name} пропустил(а) действие`);
+                    nextPlayer();
+                });
+                
+                actionButtons.appendChild(skipBtn);
+            }
+        }
+        
+        // Добавление записи в лог
+        function addLog(message, type = '') {
+            gameState.logs.push({message, type, timestamp: Date.now()});
+            
+            if (gameState.logs.length > 15) {
+                gameState.logs.shift();
+            }
+            
+            updateGameLog();
+            
+            // Сохраняем состояние для реальной игры
+            if (!gameState.isDemo) {
+                saveGameState();
+            }
+        }
+        
+        // Обновление логов
+        function updateGameLog() {
+            gameLog.innerHTML = '';
+            
+            gameState.logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${log.type ? log.type + '-log' : ''}`;
+                logEntry.textContent = log.message;
+                gameLog.appendChild(logEntry);
+            });
+            
+            // Прокрутка вниз
+            gameLog.scrollTop = gameLog.scrollHeight;
+        }
+        
+        // Следующий игрок
+        function nextPlayer() {
+            const playerIds = gameState.players.map(p => p.id);
+            const currentIndex = playerIds.indexOf(gameState.currentPlayer);
+            let nextIndex = (currentIndex + 1) % playerIds.length;
+            
+            // Пропускаем мёртвых игроков
+            let nextPlayer;
+            do {
+                nextPlayer = playerIds[nextIndex];
+                const playerStatus = gameState.players.find(p => p.id === nextPlayer).status;
+                
+                if (playerStatus === 'alive') {
+                    break;
+                }
+                nextIndex = (nextIndex + 1) % playerIds.length;
+            } while (true);
+            
+            gameState.currentPlayer = nextPlayer;
+            
+            // Если круг завершён, меняем фазу
+            if (gameState.currentPlayer === playerIds[0]) {
+                gameState.phase = gameState.phase === 'night' ? 'day' : 'night';
+                
+                if (gameState.phase === 'day') {
+                    addLog('Наступает день. Обсуждение начинается...');
+                    gameState.dayCount++;
+                } else {
+                    addLog('Наступает ночь. Город засыпает...');
+                }
+            }
+            
+            // Обновляем интерфейс
+            updateGameScreen();
+            checkGameOver();
+        }
+        
+        // Проверка окончания игры
+        function checkGameOver() {
+            // Получаем список живых игроков
+            const alivePlayers = gameState.players.filter(p => p.status === 'alive');
+            const mafiaCount = alivePlayers.filter(p => p.role === 'mafia').length;
+            const civiliansCount = alivePlayers.filter(p => p.role !== 'mafia').length;
+            
+            if (mafiaCount === 0) {
+                endGame('civilians');
+            } else if (mafiaCount >= civiliansCount) {
+                endGame('mafia');
+            }
+        }
+        
+        // Завершение игры
+        function endGame(winner) {
+            gameState.gameOver = true;
+            gameState.winner = winner;
+            
+            // Переключаемся на экран результатов
+            gameScreen.classList.remove('active');
+            resultScreen.classList.add('active');
+            updateResultScreen();
+            
+            // Для реальной игры - сохраняем состояние
+            if (!gameState.isDemo) {
+                saveGameState();
+            }
+        }
+        
+        // Обновление экрана результатов
+        function updateResultScreen() {
+            // Установка заголовка
+            winnerTitle.textContent = gameState.winner === 'civilians' 
+                ? 'Победа мирных жителей!' 
+                : 'Победа мафии!';
+            
+            // Отображение результатов игроков
+            resultPlayerList.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.role} ${player.status}`;
+                
+                const roleClass = player.role + '-badge';
+                const roleName = roleTranslations[player.role];
+                
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div>
+                        <span class="role-badge ${roleClass}">${roleName}</span>
+                    </div>
+                    <div class="player-status ${player.status}">
+                        ${player.status === 'alive' ? 'Выжил' : 'Убит'}
+                    </div>
+                `;
+                
+                resultPlayerList.appendChild(playerCard);
+            });
+        }
+        
+        // Перезапуск игры
+        function restartGame() {
+            // Переключение на экран входа
+            resultScreen.classList.remove('active');
+            joinScreen.classList.add('active');
+        }
+        
+        // Возврат на экран ввода ID
+        function goBackToJoinScreen() {
+            lobbyScreen.classList.remove('active');
+            joinScreen.classList.add('active');
+        }
+        
+        // Возврат в комнатное лобби
+        function goBackToRoomLobby() {
+            gameScreen.classList.remove('active');
+            roomLobbyScreen.classList.add('active');
+        }
+        
+        // Возврат в главное лобби
+        function goBackToMainLobby() {
+            roomLobbyScreen.classList.remove('active');
+            lobbyScreen.classList.add('active');
+        }
+        
+        // Копирование ID комнаты
+        function copyRoomId() {
+            navigator.clipboard.writeText(gameState.roomId);
+            alert('ID комнаты скопирован! Отправьте его друзьям.');
+        }
+        
+        // Запуск игры при загрузке
+        window.onload = initGame;
+    </script>
+</body>
+</html>
