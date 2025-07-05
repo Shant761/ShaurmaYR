@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Онлайн Шериф Мафия | Игра с чатом</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            border: 1px solid #ffcc0033;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        
+        .game-screen {
+            display: none;
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .active {
+            display: flex;
+        }
+        
+        .game-content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            height: 100%;
+        }
+        
+        .game-main {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(30, 30, 40, 0.7);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #444;
+            min-width: 300px;
+            max-width: 350px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 2px solid #b21f1f;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(178, 31, 31, 0.3) 0%, rgba(0,0,0,0) 70%);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+            position: relative;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            position: relative;
+        }
+        
+        .server-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 100, 0, 0.5);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .server-status::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .join-container, .lobby-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            width: 100%;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .input-group-column {
+            flex-direction: column;
+        }
+        
+        input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid #444;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #ffcc00;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
+        button {
+            padding: 15px 25px;
+            background: linear-gradient(to right, #b21f1f, #8a1c1c);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #c62e2e, #a12222);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .player-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #ffcc00;
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        
+        .player-card.ready::before {
+            background: #4CAF50;
+            transform: scaleX(1);
+        }
+        
+        .player-card.mafia {
+            background: rgba(178, 31, 31, 0.3);
+        }
+        
+        .player-card.sheriff {
+            background: rgba(255, 204, 0, 0.2);
+        }
+        
+        .player-card.ready:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .player-role {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .phase-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .phase-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.2;
+        }
+        
+        .night {
+            background: linear-gradient(to right, #1a237e, #283593);
+        }
+        
+        .night::before {
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        
+        .day {
+            background: linear-gradient(to right, #c62828, #b71c1c);
+        }
+        
+        .day::before {
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='50' fill='none' stroke='%23ffffff' stroke-width='1' stroke-opacity='0.1'/%3E%3C/svg%3E");
+        }
+        
+        .action-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .action-card {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .action-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+        
+        .log-container {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .log-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+        
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .mafia-log {
+            color: #ff6b6b;
+        }
+        
+        .sheriff-log {
+            color: #4dabf7;
+        }
+        
+        .game-over {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .winner-title {
+            font-size: 2rem;
+            color: #ffcc00;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .mafia-badge {
+            background: #b21f1f;
+        }
+        
+        .sheriff-badge {
+            background: #ffcc00;
+            color: black;
+        }
+        
+        .civilian-badge {
+            background: #4CAF50;
+        }
+        
+        .player-status {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
+        .alive {
+            color: #4CAF50;
+        }
+        
+        .dead {
+            color: #f44336;
+            text-decoration: line-through;
+        }
+        
+        .room-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+        
+        .room-id {
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        
+        .copy-btn {
+            padding: 8px 15px;
+            background: #444;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #555;
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .firebase-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 100, 0, 0.5);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .firebase-status::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .firebase-status.offline {
+            background: rgba(100, 0, 0, 0.5);
+        }
+        
+        .firebase-status.offline::before {
+            background: #f44336;
+            box-shadow: 0 0 10px #f44336;
+        }
+        
+        .role-info {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            border-left: 3px solid #ffcc00;
+        }
+        
+        /* Стили для чата */
+        .chat-header {
+            background: #1a1a2e;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            padding: 15px;
+            background: #1a1a2e;
+            border-top: 1px solid #444;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .chat-send-btn {
+            margin-left: 10px;
+            padding: 12px 20px;
+            background: #b21f1f;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .chat-send-btn:hover {
+            background: #c62e2e;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+        
+        .message-content {
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            text-align: right;
+            margin-top: 3px;
+        }
+        
+        .message-incoming {
+            align-self: flex-start;
+            background: rgba(50, 50, 70, 0.8);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message-outgoing {
+            align-self: flex-end;
+            background: rgba(70, 50, 120, 0.8);
+            border-bottom-right-radius: 5px;
+        }
+        
+        .system-message {
+            align-self: center;
+            background: rgba(255, 204, 0, 0.2);
+            text-align: center;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .game-content {
+                flex-direction: column;
+            }
+            
+            .chat-container {
+                max-width: 100%;
+                height: 300px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .action-container {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .player-list {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="firebase-status" id="firebaseStatus">
+            <i class="fas fa-database"></i> Firebase Online
+        </div>
+        
+        <header>
+            <h1><i class="fas fa-user-secret"></i> ОНЛАЙН ШЕРИФ МАФИЯ</h1>
+            <div class="subtitle">Играйте с друзьями и общайтесь в чате в реальном времени</div>
+        </header>
+        
+        <!-- Экран входа -->
+        <div id="joinScreen" class="game-screen active">
+            <div class="join-container">
+                <div class="input-group input-group-column">
+                    <input type="text" id="playerName" placeholder="Введите ваше имя" maxlength="15" value="Игрок">
+                    <input type="text" id="roomIdInput" placeholder="Введите ID комнаты (например: MAF-1234)">
+                    <button id="joinRoomBtn">Присоединиться к игре</button>
+                </div>
+                
+                <div class="input-group">
+                    <button id="createRoomBtn">Создать новую игру</button>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-info-circle"></i> Как играть:</h3>
+                    <ul>
+                        <li><strong>Создатель игры:</strong> Нажмите "Создать новую игру", затем пригласите друзей с помощью ID комнаты</li>
+                        <li><strong>Участник:</strong> Введите имя и ID комнаты от создателя, затем нажмите "Присоединиться"</li>
+                        <li><strong>Роли:</strong> Игра распределяет роли: Мафия, Шериф и Мирные жители</li>
+                        <li><strong>Ночь:</strong> Мафия выбирает жертву, Шериф проверяет игроков</li>
+                        <li><strong>День:</strong> Все игроки обсуждают и голосуют за подозреваемого</li>
+                        <li><strong>Чат:</strong> Общайтесь с другими игроками во время игры</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Лобби -->
+        <div id="lobbyScreen" class="game-screen">
+            <div class="back-btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i> Назад
+            </div>
+            
+            <div class="game-content">
+                <div class="game-main">
+                    <div class="lobby-container">
+                        <div class="room-info">
+                            <div>ID комнаты: <span id="roomId" class="room-id">MAF-0000</span></div>
+                            <div class="copy-btn" id="copyBtn"><i class="fas fa-copy"></i> Копировать</div>
+                        </div>
+                        
+                        <div class="game-info">
+                            <div>Игроков: <span id="playerCount">0</span>/5</div>
+                            <div>Статус: <span id="lobbyStatus">Ожидание игроков</span></div>
+                        </div>
+                        
+                        <div class="player-list" id="playerList">
+                            <!-- Игроки будут добавляться здесь -->
+                        </div>
+                        
+                        <button id="startBtn" disabled>Начать игру</button>
+                    </div>
+                </div>
+                
+                <!-- Чат в лобби -->
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <i class="fas fa-comments"></i> Чат лобби
+                    </div>
+                    <div class="chat-messages" id="lobbyChatMessages">
+                        <div class="system-message">Чат лобби. Общайтесь перед началом игры!</div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="lobbyChatInput" placeholder="Напишите сообщение...">
+                        <button class="chat-send-btn" id="lobbyChatSend"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Игровой экран -->
+        <div id="gameScreen" class="game-screen">
+            <div class="back-btn" id="backToLobbyBtn">
+                <i class="fas fa-arrow-left"></i> В лобби
+            </div>
+            
+            <div class="game-content">
+                <div class="game-main">
+                    <div class="game-info">
+                        <div>Игроков: <span id="gamePlayerCount">0</span>/5</div>
+                        <div>День: <span id="dayCount">1</span></div>
+                        <div>Комната: <span id="gameRoomId" class="room-id">MAF-0000</span></div>
+                    </div>
+                    
+                    <div id="phaseDisplay" class="phase-display night">НОЧЬ</div>
+                    
+                    <div class="action-container">
+                        <div class="action-card">
+                            <div class="action-title">Ваша роль</div>
+                            <div id="playerRole">Ожидание...</div>
+                            <div class="role-info" id="roleInfo">Описание вашей роли появится здесь</div>
+                            <div id="playerStatus" class="player-status alive">Статус: жив</div>
+                        </div>
+                        
+                        <div class="action-card">
+                            <div class="action-title">Ваше действие</div>
+                            <div id="actionDescription">Ожидайте начала игры...</div>
+                            <div id="actionButtons" style="margin-top: 15px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="log-container">
+                        <div class="log-title"><i class="fas fa-scroll"></i> События игры</div>
+                        <div id="gameLog">
+                            <div class="log-entry">Игра началась. Наступает ночь...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Чат во время игры -->
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <i class="fas fa-comments"></i> Игровой чат
+                    </div>
+                    <div class="chat-messages" id="gameChatMessages">
+                        <div class="system-message">Игровой чат. Общайтесь с другими игроками!</div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="gameChatInput" placeholder="Напишите сообщение...">
+                        <button class="chat-send-btn" id="gameChatSend"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Экран результатов -->
+        <div id="resultScreen" class="game-screen">
+            <div class="game-over">
+                <div id="winnerTitle" class="winner-title">Победа мирных жителей!</div>
+                <div class="player-list" id="resultPlayerList">
+                    <!-- Результаты игроков будут здесь -->
+                </div>
+                <button id="restartBtn"><i class="fas fa-redo"></i> Создать новую игру</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфиг Firebase (замените на свой)
+        const firebaseConfig = {
+  apiKey: "AIzaSyDrOAhG2hQphTC8xmI_L1HD835Z101GPAI",
+  authDomain: "grean-mafia.firebaseapp.com",
+  databaseURL: "https://grean-mafia-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "grean-mafia",
+  storageBucket: "grean-mafia.firebasestorage.app",
+  messagingSenderId: "603308315781",
+  appId: "1:603308315781:web:053d9551ed6516477905ec"
+};
+        
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Состояние игры
+        let gameState = {
+            roomId: '',
+            players: [],
+            currentPlayer: null,
+            dayCount: 1,
+            phase: 'night',
+            gameOver: false,
+            winner: null,
+            logs: [],
+            votes: {},
+            killTarget: null,
+            checkTarget: null,
+            chatMessages: [] // Сообщения чата
+        };
+        
+        // Текущий игрок
+        let currentPlayer = {
+            id: null,
+            name: '',
+            role: null,
+            status: 'alive',
+            isHost: false
+        };
+        
+        // Роли
+        const roles = ['mafia', 'sheriff', 'civilian', 'civilian', 'civilian'];
+        
+        // Описания ролей
+        const roleDescriptions = {
+            mafia: "Вы - мафия! Ночью вы устраняете одного игрока. Днём старайтесь не попасться. Ваша цель - остаться в большинстве.",
+            sheriff: "Вы - шериф! Ночью вы можете проверить одного игрока на принадлежность к мафии. Днём помогите мирным жителям вычислить мафию.",
+            civilian: "Вы - мирный житель! Ночью вы спите. Днём обсуждайте и голосуйте, чтобы найти мафию и обезвредить её."
+        };
+        
+        // DOM элементы
+        const joinScreen = document.getElementById('joinScreen');
+        const lobbyScreen = document.getElementById('lobbyScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const playerNameInput = document.getElementById('playerName');
+        const roomIdInput = document.getElementById('roomIdInput');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const startBtn = document.getElementById('startBtn');
+        const playerList = document.getElementById('playerList');
+        const playerCount = document.getElementById('playerCount');
+        const gamePlayerCount = document.getElementById('gamePlayerCount');
+        const dayCount = document.getElementById('dayCount');
+        const phaseDisplay = document.getElementById('phaseDisplay');
+        const playerRole = document.getElementById('playerRole');
+        const roleInfo = document.getElementById('roleInfo');
+        const playerStatus = document.getElementById('playerStatus');
+        const actionDescription = document.getElementById('actionDescription');
+        const actionButtons = document.getElementById('actionButtons');
+        const gameLog = document.getElementById('gameLog');
+        const resultPlayerList = document.getElementById('resultPlayerList');
+        const winnerTitle = document.getElementById('winnerTitle');
+        const restartBtn = document.getElementById('restartBtn');
+        const roomIdElement = document.getElementById('roomId');
+        const gameRoomId = document.getElementById('gameRoomId');
+        const copyBtn = document.getElementById('copyBtn');
+        const backBtn = document.getElementById('backBtn');
+        const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+        const lobbyStatus = document.getElementById('lobbyStatus');
+        const firebaseStatus = document.getElementById('firebaseStatus');
+        
+        // Элементы чата
+        const lobbyChatMessages = document.getElementById('lobbyChatMessages');
+        const lobbyChatInput = document.getElementById('lobbyChatInput');
+        const lobbyChatSend = document.getElementById('lobbyChatSend');
+        const gameChatMessages = document.getElementById('gameChatMessages');
+        const gameChatInput = document.getElementById('gameChatInput');
+        const gameChatSend = document.getElementById('gameChatSend');
+        
+        // Перевод ролей
+        const roleTranslations = {
+            'mafia': 'Мафия',
+            'sheriff': 'Шериф',
+            'civilian': 'Мирный житель'
+        };
+        
+        // Инициализация игры
+        function initGame() {
+            // Обработчики событий
+            joinRoomBtn.addEventListener('click', joinRoom);
+            createRoomBtn.addEventListener('click', createRoom);
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+            copyBtn.addEventListener('click', copyRoomId);
+            backBtn.addEventListener('click', goBackToJoinScreen);
+            backToLobbyBtn.addEventListener('click', goBackToLobby);
+            
+            // Обработчики чата
+            lobbyChatSend.addEventListener('click', sendLobbyMessage);
+            lobbyChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendLobbyMessage();
+            });
+            
+            gameChatSend.addEventListener('click', sendGameMessage);
+            gameChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendGameMessage();
+            });
+            
+            // Авто-заполнение для демонстрации
+            playerNameInput.value = 'Игрок' + Math.floor(Math.random() * 100);
+            roomIdInput.value = '';
+            
+            // Проверка статуса Firebase
+            checkFirebaseConnection();
+            
+            // Генерация ID комнаты для демонстрации
+            roomIdElement.textContent = 'MAF-' + Math.floor(1000 + Math.random() * 9000);
+        }
+        
+        // Проверка соединения с Firebase
+        function checkFirebaseConnection() {
+            const connectedRef = database.ref(".info/connected");
+            connectedRef.on("value", (snap) => {
+                if (snap.val() === true) {
+                    firebaseStatus.innerHTML = '<i class="fas fa-database"></i> Firebase Online';
+                    firebaseStatus.classList.remove('offline');
+                } else {
+                    firebaseStatus.innerHTML = '<i class="fas fa-database"></i> Firebase Offline';
+                    firebaseStatus.classList.add('offline');
+                }
+            });
+        }
+        
+        // Отправка сообщения в лобби
+        function sendLobbyMessage() {
+            const message = lobbyChatInput.value.trim();
+            if (message && currentPlayer.id) {
+                const newMessage = {
+                    senderId: currentPlayer.id,
+                    senderName: currentPlayer.name,
+                    text: message,
+                    timestamp: Date.now(),
+                    isSystem: false
+                };
+                
+                // Добавляем сообщение в состояние игры
+                gameState.chatMessages.push(newMessage);
+                saveGameState();
+                
+                // Очищаем поле ввода
+                lobbyChatInput.value = '';
+            }
+        }
+        
+        // Отправка сообщения во время игры
+        function sendGameMessage() {
+            const message = gameChatInput.value.trim();
+            if (message && currentPlayer.id) {
+                const newMessage = {
+                    senderId: currentPlayer.id,
+                    senderName: currentPlayer.name,
+                    text: message,
+                    timestamp: Date.now(),
+                    isSystem: false
+                };
+                
+                // Добавляем сообщение в состояние игры
+                gameState.chatMessages.push(newMessage);
+                saveGameState();
+                
+                // Очищаем поле ввода
+                gameChatInput.value = '';
+            }
+        }
+        
+        // Отображение сообщений чата
+        function renderChatMessages() {
+            // Очищаем контейнеры сообщений
+            lobbyChatMessages.innerHTML = '';
+            gameChatMessages.innerHTML = '';
+            
+            // Добавляем системное сообщение в лобби
+            if (lobbyScreen.classList.contains('active')) {
+                const systemMsg = document.createElement('div');
+                systemMsg.className = 'system-message';
+                systemMsg.textContent = 'Чат лобби. Общайтесь перед началом игры!';
+                lobbyChatMessages.appendChild(systemMsg);
+            }
+            
+            // Отображаем все сообщения
+            gameState.chatMessages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                
+                if (msg.isSystem) {
+                    // Системное сообщение
+                    messageDiv.className = 'system-message';
+                    messageDiv.textContent = msg.text;
+                } else {
+                    // Сообщение от игрока
+                    const isCurrentUser = msg.senderId === currentPlayer.id;
+                    messageDiv.className = `message ${isCurrentUser ? 'message-outgoing' : 'message-incoming'}`;
+                    
+                    const time = new Date(msg.timestamp);
+                    const timeString = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+                    
+                    messageDiv.innerHTML = `
+                        <div class="message-sender">${msg.senderName}</div>
+                        <div class="message-content">${msg.text}</div>
+                        <div class="message-time">${timeString}</div>
+                    `;
+                }
+                
+                // Добавляем сообщение в оба чата (лобби и игры)
+                lobbyChatMessages.appendChild(messageDiv.cloneNode(true));
+                gameChatMessages.appendChild(messageDiv);
+            });
+            
+            // Прокручиваем вниз
+            lobbyChatMessages.scrollTop = lobbyChatMessages.scrollHeight;
+            gameChatMessages.scrollTop = gameChatMessages.scrollHeight;
+        }
+        
+        // Копирование ID комнаты
+        function copyRoomId() {
+            navigator.clipboard.writeText(gameState.roomId);
+            alert('ID комнаты скопирован! Отправьте его друзьям.');
+        }
+        
+        // Создание комнаты
+        function createRoom() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                alert('Имя должно содержать не менее 2 символов');
+                return;
+            }
+            
+            // Генерируем ID комнаты
+            const roomId = 'MAF-' + Math.floor(1000 + Math.random() * 9000);
+            
+            // Создаем игрока (хоста)
+            const playerId = generatePlayerId();
+            currentPlayer = {
+                id: playerId,
+                name: name,
+                role: null,
+                status: 'alive',
+                isHost: true
+            };
+            
+            // Инициализируем состояние игры
+            gameState = {
+                roomId: roomId,
+                players: [currentPlayer],
+                currentPlayer: null,
+                dayCount: 1,
+                phase: 'lobby',
+                gameOver: false,
+                winner: null,
+                logs: [{message: `Комната создана. ${name} присоединился как создатель.`, timestamp: Date.now()}],
+                votes: {},
+                killTarget: null,
+                checkTarget: null,
+                chatMessages: [{
+                    isSystem: true,
+                    text: `Игра создана. ${name} присоединился как создатель.`,
+                    timestamp: Date.now()
+                }]
+            };
+            
+            // Сохраняем состояние в Firebase
+            saveGameState();
+            
+            // Обновляем интерфейс
+            roomIdElement.textContent = roomId;
+            gameRoomId.textContent = roomId;
+            
+            // Переключаемся на лобби
+            joinScreen.classList.remove('active');
+            lobbyScreen.classList.add('active');
+            
+            // Обновляем лобби
+            updateLobby();
+            
+            // Слушаем изменения в Firebase
+            listenForGameChanges();
+        }
+        
+        // Присоединение к комнате
+        function joinRoom() {
+            const name = playerNameInput.value.trim();
+            const roomId = roomIdInput.value.trim();
+            
+            if (name.length < 2) {
+                alert('Имя должно содержать не менее 2 символов');
+                return;
+            }
+            
+            if (!roomId.match(/^MAF-\d{4}$/)) {
+                alert('Неверный формат ID комнаты. Пример: MAF-1234');
+                return;
+            }
+            
+            // Создаем игрока
+            const playerId = generatePlayerId();
+            currentPlayer = {
+                id: playerId,
+                name: name,
+                role: null,
+                status: 'alive',
+                isHost: false
+            };
+            
+            // Загружаем состояние игры из Firebase
+            loadGameState(roomId, () => {
+                // Проверяем, не заполнена ли комната
+                if (gameState.players.length >= 5) {
+                    alert('Комната заполнена');
+                    return;
+                }
+                
+                // Проверяем, не занято ли имя
+                if (gameState.players.some(p => p.name === name)) {
+                    alert('Имя уже занято');
+                    return;
+                }
+                
+                // Добавляем игрока
+                gameState.players.push(currentPlayer);
+                
+                // Добавляем сообщение в чат
+                gameState.chatMessages.push({
+                    isSystem: true,
+                    text: `${name} присоединился к игре.`,
+                    timestamp: Date.now()
+                });
+                
+                saveGameState();
+                
+                // Обновляем интерфейс
+                roomIdElement.textContent = gameState.roomId;
+                gameRoomId.textContent = gameState.roomId;
+                
+                // Переключаемся на лобби
+                joinScreen.classList.remove('active');
+                lobbyScreen.classList.add('active');
+                
+                // Обновляем лобби
+                updateLobby();
+                
+                // Слушаем изменения в Firebase
+                listenForGameChanges();
+            });
+        }
+        
+        // Генерация ID игрока
+        function generatePlayerId() {
+            return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        }
+        
+        // Загрузка состояния игры из Firebase
+        function loadGameState(roomId, callback) {
+            const gameRef = database.ref(`rooms/${roomId}`);
+            gameRef.once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    gameState = snapshot.val();
+                    callback();
+                } else {
+                    alert('Комната не найдена');
+                }
+            });
+        }
+        
+        // Сохранение состояния игры в Firebase
+        function saveGameState() {
+            const gameRef = database.ref(`rooms/${gameState.roomId}`);
+            gameRef.set(gameState);
+        }
+        
+        // Прослушивание изменений в игре
+        function listenForGameChanges() {
+            const gameRef = database.ref(`rooms/${gameState.roomId}`);
+            gameRef.on('value', snapshot => {
+                if (snapshot.exists()) {
+                    gameState = snapshot.val();
+                    
+                    // Обновляем интерфейс в зависимости от экрана
+                    if (lobbyScreen.classList.contains('active')) {
+                        updateLobby();
+                    } else if (gameScreen.classList.contains('active')) {
+                        updateGameScreen();
+                    } else if (resultScreen.classList.contains('active')) {
+                        updateResultScreen();
+                    }
+                    
+                    // Обновляем чат всегда
+                    renderChatMessages();
+                    
+                    // Если игра началась, переключаем на игровой экран
+                    if (gameState.phase !== 'lobby' && lobbyScreen.classList.contains('active')) {
+                        lobbyScreen.classList.remove('active');
+                        gameScreen.classList.add('active');
+                        updateGameScreen();
+                    }
+                    
+                    // Если игра завершена, переключаем на экран результатов
+                    if (gameState.gameOver && gameScreen.classList.contains('active')) {
+                        gameScreen.classList.remove('active');
+                        resultScreen.classList.add('active');
+                        updateResultScreen();
+                    }
+                }
+            });
+        }
+        
+        // Обновление лобби
+        function updateLobby() {
+            playerList.innerHTML = '';
+            playerCount.textContent = gameState.players.length;
+            
+            // Обновляем статус лобби
+            if (gameState.players.length === 0) {
+                lobbyStatus.textContent = 'Ожидание игроков';
+            } else if (gameState.players.length < 3) {
+                lobbyStatus.textContent = `Ожидание игроков (минимум 3)`;
+            } else if (gameState.players.length < 5) {
+                lobbyStatus.textContent = `Ожидание игроков (${5 - gameState.players.length} из 5)`;
+            } else {
+                lobbyStatus.textContent = 'Лобби заполнено!';
+            }
+            
+            // Активируем кнопку старта для хоста
+            startBtn.disabled = !(currentPlayer.isHost && gameState.players.length >= 3);
+            
+            // Отображаем игроков
+            gameState.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.isHost ? 'host' : ''}`;
+                
+                let playerInfo = `<div class="player-name">${player.name}</div>`;
+                if (player.isHost) {
+                    playerInfo += `<div class="player-status"><i class="fas fa-crown"></i> Создатель</div>`;
+                } else {
+                    playerInfo += `<div class="player-status">Ожидание...</div>`;
+                }
+                
+                playerCard.innerHTML = playerInfo;
+                playerList.appendChild(playerCard);
+            });
+        }
+        
+        // Начало игры
+        function startGame() {
+            // Перемешиваем роли
+            shuffleRoles();
+            
+            // Назначаем роли
+            assignRoles();
+            
+            // Добавляем сообщение в чат
+            gameState.chatMessages.push({
+                isSystem: true,
+                text: 'Игра началась! Наступает ночь...',
+                timestamp: Date.now()
+            });
+            
+            // Устанавливаем первого игрока
+            gameState.currentPlayer = gameState.players[0].id;
+            gameState.phase = 'night';
+            gameState.logs = [{message: 'Игра началась! Наступает ночь...', timestamp: Date.now()}];
+            
+            // Сохраняем состояние
+            saveGameState();
+        }
+        
+        // Перемешивание ролей
+        function shuffleRoles() {
+            for (let i = roles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [roles[i], roles[j]] = [roles[j], roles[i]];
+            }
+        }
+        
+        // Назначение ролей игрокам
+        function assignRoles() {
+            gameState.players.forEach((player, index) => {
+                player.role = roles[index];
+            });
+        }
+        
+        // Обновление игрового экрана
+        function updateGameScreen() {
+            // Находим текущего игрока в состоянии
+            const player = gameState.players.find(p => p.id === currentPlayer.id);
+            if (!player) return;
+            
+            // Обновляем количество живых игроков
+            const alivePlayers = gameState.players.filter(p => p.status === 'alive');
+            gamePlayerCount.textContent = `${alivePlayers.length}/${gameState.players.length}`;
+            
+            dayCount.textContent = gameState.dayCount;
+            
+            // Установка фазы
+            phaseDisplay.textContent = gameState.phase === 'night' ? 'НОЧЬ' : 'ДЕНЬ';
+            phaseDisplay.className = `phase-display ${gameState.phase}`;
+            
+            // Отображение роли текущего игрока
+            playerRole.textContent = roleTranslations[player.role] || 'Роль не определена';
+            roleInfo.textContent = roleDescriptions[player.role] || '';
+            playerStatus.textContent = `Статус: ${player.status === 'alive' ? 'жив' : 'мёртв'}`;
+            playerStatus.className = `player-status ${player.status}`;
+            
+            // Обновление описания действий
+            updateActionDescription(player);
+            
+            // Обновление логов
+            updateGameLog();
+        }
+        
+        // Обновление описания действий
+        function updateActionDescription(player) {
+            actionButtons.innerHTML = '';
+            
+            // Если игрок мертв
+            if (player.status !== 'alive') {
+                actionDescription.textContent = 'Вы мертвы и не можете действовать.';
+                return;
+            }
+            
+            if (gameState.phase === 'night') {
+                if (player.role === 'mafia') {
+                    actionDescription.textContent = 'Выберите игрока для устранения:';
+                    renderPlayerActions('kill', player);
+                } else if (player.role === 'sheriff') {
+                    actionDescription.textContent = 'Выберите игрока для проверки:';
+                    renderPlayerActions('check', player);
+                } else {
+                    actionDescription.textContent = 'Вы спите... Наступает ночь.';
+                }
+            } else {
+                actionDescription.textContent = 'Обсудите и выберите игрока для исключения:';
+                renderPlayerActions('vote', player);
+            }
+        }
+        
+        // Рендер действий с игроками
+        function renderPlayerActions(actionType, currentPlayer) {
+            const alivePlayers = gameState.players.filter(p => 
+                p.status === 'alive' && p.id !== currentPlayer.id
+            );
+            
+            if (alivePlayers.length === 0) {
+                actionDescription.textContent = 'Нет других игроков для действия';
+                return;
+            }
+            
+            alivePlayers.forEach(player => {
+                const btn = document.createElement('button');
+                btn.textContent = player.name;
+                btn.style.margin = '5px';
+                
+                btn.addEventListener('click', () => {
+                    if (actionType === 'kill') {
+                        // Мафия выбирает жертву
+                        gameState.killTarget = player.id;
+                        addLog(`${currentPlayer.name} (мафия) выбрал(а) ${player.name} для устранения`, 'mafia');
+                    } else if (actionType === 'check') {
+                        // Шериф проверяет игрока
+                        gameState.checkTarget = player.id;
+                        const role = roleTranslations[player.role];
+                        addLog(`${currentPlayer.name} (шериф) проверил(а) ${player.name}. Роль: ${role}`, 'sheriff');
+                    } else {
+                        // Голосование днем
+                        gameState.votes[currentPlayer.id] = player.id;
+                        addLog(`${currentPlayer.name} проголосовал(а) против ${player.name}`);
+                    }
+                    
+                    // Переходим к следующему игроку
+                    nextPlayer();
+                });
+                
+                actionButtons.appendChild(btn);
+            });
+            
+            // Кнопка пропуска
+            const skipBtn = document.createElement('button');
+            skipBtn.textContent = 'Пропустить';
+            skipBtn.style.margin = '5px';
+            skipBtn.style.background = '#555';
+            
+            skipBtn.addEventListener('click', () => {
+                addLog(`${currentPlayer.name} пропустил(а) действие`);
+                nextPlayer();
+            });
+            
+            actionButtons.appendChild(skipBtn);
+        }
+        
+        // Добавление записи в лог
+        function addLog(message, type = '') {
+            gameState.logs.push({message, type, timestamp: Date.now()});
+            
+            if (gameState.logs.length > 15) {
+                gameState.logs.shift();
+            }
+            
+            saveGameState();
+        }
+        
+        // Обновление логов
+        function updateGameLog() {
+            gameLog.innerHTML = '';
+            
+            gameState.logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${log.type ? log.type + '-log' : ''}`;
+                logEntry.innerHTML = `<i class="far fa-clock"></i> ${log.message}`;
+                gameLog.appendChild(logEntry);
+            });
+            
+            // Прокрутка вниз
+            gameLog.scrollTop = gameLog.scrollHeight;
+        }
+        
+        // Следующий игрок
+        function nextPlayer() {
+            const currentIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer);
+            let nextIndex = (currentIndex + 1) % gameState.players.length;
+            
+            // Пропускаем мёртвых игроков
+            while (gameState.players[nextIndex].status !== 'alive') {
+                nextIndex = (nextIndex + 1) % gameState.players.length;
+                
+                // Если все игроки мертвы, завершаем игру
+                if (nextIndex === currentIndex) {
+                    break;
+                }
+            }
+            
+            gameState.currentPlayer = gameState.players[nextIndex].id;
+            
+            // Если круг завершён, меняем фазу
+            if (gameState.currentPlayer === gameState.players[0].id) {
+                endPhase();
+            }
+            
+            // Сохраняем состояние
+            saveGameState();
+            checkGameOver();
+        }
+        
+        // Завершение фазы
+        function endPhase() {
+            if (gameState.phase === 'night') {
+                // Обработка действий ночи
+                if (gameState.killTarget) {
+                    const targetPlayer = gameState.players.find(p => p.id === gameState.killTarget);
+                    if (targetPlayer) {
+                        targetPlayer.status = 'dead';
+                        addLog(`Утром все обнаружили, что ${targetPlayer.name} был убит мафией!`);
+                    }
+                    gameState.killTarget = null;
+                }
+                
+                gameState.phase = 'day';
+                addLog('Наступает день. Обсуждение начинается...');
+                gameState.dayCount++;
+            } else {
+                // Обработка голосования днем
+                const voteCounts = {};
+                Object.values(gameState.votes).forEach(vote => {
+                    voteCounts[vote] = (voteCounts[vote] || 0) + 1;
+                });
+                
+                let maxVotes = 0;
+                let votedPlayerId = null;
+                
+                for (const [playerId, votes] of Object.entries(voteCounts)) {
+                    if (votes > maxVotes) {
+                        maxVotes = votes;
+                        votedPlayerId = playerId;
+                    }
+                }
+                
+                if (votedPlayerId && maxVotes > 0) {
+                    const votedPlayer = gameState.players.find(p => p.id === votedPlayerId);
+                    if (votedPlayer) {
+                        votedPlayer.status = 'dead';
+                        addLog(`Игроки решили исключить ${votedPlayer.name}. Роль: ${roleTranslations[votedPlayer.role]}`);
+                    }
+                } else {
+                    addLog('Игроки не смогли договориться, никто не исключен.');
+                }
+                
+                gameState.votes = {};
+                gameState.phase = 'night';
+                addLog('Наступает ночь. Город засыпает...');
+            }
+        }
+        
+        // Проверка окончания игры
+        function checkGameOver() {
+            const alivePlayers = gameState.players.filter(p => p.status === 'alive');
+            const mafiaCount = alivePlayers.filter(p => p.role === 'mafia').length;
+            const civiliansCount = alivePlayers.filter(p => p.role !== 'mafia').length;
+            
+            if (mafiaCount === 0) {
+                endGame('civilians');
+            } else if (mafiaCount >= civiliansCount) {
+                endGame('mafia');
+            }
+        }
+        
+        // Завершение игры
+        function endGame(winner) {
+            gameState.gameOver = true;
+            gameState.winner = winner;
+            
+            // Добавляем сообщение в чат
+            const winnerText = winner === 'civilians' 
+                ? 'Победа мирных жителей!' 
+                : 'Победа мафии!';
+                
+            gameState.chatMessages.push({
+                isSystem: true,
+                text: `Игра завершена! ${winnerText}`,
+                timestamp: Date.now()
+            });
+            
+            saveGameState();
+        }
+        
+        // Обновление экрана результатов
+        function updateResultScreen() {
+            // Установка заголовка
+            winnerTitle.textContent = gameState.winner === 'civilians' 
+                ? 'Победа мирных жителей!' 
+                : 'Победа мафии!';
+            
+            // Отображение результатов игроков
+            resultPlayerList.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.role} ${player.status}`;
+                
+                const roleClass = player.role + '-badge';
+                const roleName = roleTranslations[player.role];
+                
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div>
+                        <span class="role-badge ${roleClass}">${roleName}</span>
+                    </div>
+                    <div class="player-status ${player.status}">
+                        ${player.status === 'alive' ? 'Выжил' : 'Убит'}
+                    </div>
+                `;
+                
+                resultPlayerList.appendChild(playerCard);
+            });
+        }
+        
+        // Перезапуск игры
+        function restartGame() {
+            // Переключение на экран входа
+            resultScreen.classList.remove('active');
+            joinScreen.classList.add('active');
+            
+            // Сброс состояния
+            gameState = {
+                roomId: '',
+                players: [],
+                currentPlayer: null,
+                dayCount: 1,
+                phase: 'night',
+                gameOver: false,
+                winner: null,
+                logs: [],
+                votes: {},
+                killTarget: null,
+                checkTarget: null,
+                chatMessages: []
+            };
+            
+            currentPlayer = {
+                id: null,
+                name: '',
+                role: null,
+                status: 'alive',
+                isHost: false
+            };
+        }
+        
+        // Возврат на экран ввода ID
+        function goBackToJoinScreen() {
+            // Удаляем игрока из комнаты
+            if (gameState.roomId) {
+                gameState.players = gameState.players.filter(p => p.id !== currentPlayer.id);
+                
+                // Добавляем сообщение о выходе
+                gameState.chatMessages.push({
+                    isSystem: true,
+                    text: `${currentPlayer.name} покинул игру.`,
+                    timestamp: Date.now()
+                });
+                
+                saveGameState();
+            }
+            
+            lobbyScreen.classList.remove('active');
+            joinScreen.classList.add('active');
+        }
+        
+        // Возврат в лобби
+        function goBackToLobby() {
+            gameScreen.classList.remove('active');
+            lobbyScreen.classList.add('active');
+        }
+        
+        // Запуск игры при загрузке
+        window.onload = initGame;
+    </script>
+</body>
+</html>
