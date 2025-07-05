@@ -2,10 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green Mafia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Онлайн Мафия | Улучшенный чат</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Обновлённые стили с улучшенным UI */
         * {
             margin: 0;
             padding: 0;
@@ -15,7 +19,7 @@
         }
         
         body {
-            background: linear-gradient(135deg, #1a3a1c, #2a5a2e, #1a3a1c);
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
             color: white;
@@ -32,12 +36,12 @@
         
         .container {
             max-width: 100%;
-            background: rgba(20, 40, 20, 0.9);
+            background: rgba(0, 0, 0, 0.8);
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
             position: relative;
-            border: 1px solid #4CAF50;
+            border: 1px solid #ffcc0033;
             display: flex;
             flex-direction: column;
             height: calc(100vh - 15px);
@@ -85,11 +89,10 @@
             height: calc(100% - 50px);
             display: flex;
             flex-direction: column;
-            background: rgba(30, 50, 30, 0.95);
+            background: rgba(30, 30, 40, 0.95);
             border-radius: 0 0 20px 20px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
             overflow: hidden;
-            border: 1px solid #4CAF50;
         }
         
         .chat-container.open {
@@ -103,7 +106,7 @@
             right: 20px;
             width: 50px;
             height: 50px;
-            background: #4CAF50;
+            background: #b21f1f;
             border-radius: 50%;
             z-index: 1001;
             cursor: pointer;
@@ -117,14 +120,14 @@
         
         .chat-toggle-btn:hover {
             transform: scale(1.1);
-            background: #3d8b40;
+            background: #8a1c1c;
         }
         
         .chat-toggle-btn .badge {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: #FFD700;
+            background: #ffcc00;
             border-radius: 50%;
             width: 24px;
             height: 24px;
@@ -148,7 +151,7 @@
             right: 20px;
             width: 50px;
             height: 50px;
-            background: #8BC34A;
+            background: #4CAF50;
             border-radius: 50%;
             z-index: 1001;
             cursor: pointer;
@@ -162,7 +165,7 @@
         
         .rooms-toggle-btn:hover {
             transform: scale(1.1);
-            background: #689F38;
+            background: #3d8b40;
         }
         
         .rooms-icon {
@@ -173,8 +176,8 @@
         header {
             text-align: center;
             padding: 10px 15px;
-            background: rgba(30, 60, 30, 0.8);
-            border-bottom: 2px solid #4CAF50;
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 2px solid #b21f1f;
             position: relative;
             overflow: hidden;
             display: flex;
@@ -189,7 +192,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, rgba(76, 175, 80, 0.3) 0%, rgba(0,0,0,0) 70%);
+            background: radial-gradient(circle, rgba(178, 31, 31, 0.3) 0%, rgba(0,0,0,0) 70%);
         }
         
         .header-content {
@@ -210,7 +213,7 @@
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: #8BC34A;
+            background: #4dabf7;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -226,7 +229,7 @@
         }
         
         .logout-btn {
-            background: rgba(76, 175, 80, 0.7);
+            background: rgba(178, 31, 31, 0.7);
             border: none;
             border-radius: 50%;
             width: 28px;
@@ -241,13 +244,9 @@
         h1 {
             font-size: 1.5rem;
             margin-bottom: 5px;
-            color: #C8E6C9;
-            text-shadow: 0 0 10px rgba(200, 230, 201, 0.7);
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
             position: relative;
-        }
-        
-        h1 i {
-            color: #4CAF50;
         }
         
         .subtitle {
@@ -310,13 +309,13 @@
         
         input:focus {
             outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            border-color: #ffcc00;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
         }
         
         button {
             padding: 12px;
-            background: linear-gradient(to right, #4CAF50, #388E3C);
+            background: linear-gradient(to right, #b21f1f, #8a1c1c);
             color: white;
             border: none;
             border-radius: 12px;
@@ -330,7 +329,7 @@
         
         button:active {
             transform: translateY(2px);
-            background: linear-gradient(to right, #388E3C, #2E7D32);
+            background: linear-gradient(to right, #a11919, #791919);
         }
         
         button:disabled {
@@ -356,7 +355,7 @@
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             min-height: 80px;
             display: flex;
             flex-direction: column;
@@ -397,11 +396,11 @@
         }
         
         .night {
-            background: linear-gradient(to right, #1a3a1c, #2a5a2e);
+            background: linear-gradient(to right, #1a237e, #283593);
         }
         
         .day {
-            background: linear-gradient(to right, #4CAF50, #388E3C);
+            background: linear-gradient(to right, #c62828, #b71c1c);
         }
         
         .action-container {
@@ -416,13 +415,13 @@
             border-radius: 10px;
             padding: 12px;
             text-align: center;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .action-title {
             font-size: 1.1rem;
             margin-bottom: 10px;
-            color: #C8E6C9;
+            color: #ffcc00;
         }
         
         .log-container {
@@ -432,28 +431,28 @@
             padding: 12px;
             max-height: 140px;
             overflow-y: auto;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.85rem;
         }
         
         .log-title {
             font-size: 1rem;
             margin-bottom: 6px;
-            color: #C8E6C9;
+            color: #ffcc00;
         }
         
         .log-entry {
             padding: 5px;
-            border-bottom: 1px solid rgba(76, 175, 80, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.85rem;
         }
         
         .mafia-log {
-            color: #FF6B6B;
+            color: #ff6b6b;
         }
         
         .sheriff-log {
-            color: #81D4FA;
+            color: #4dabf7;
         }
         
         .game-over {
@@ -463,9 +462,9 @@
         
         .winner-title {
             font-size: 1.6rem;
-            color: #C8E6C9;
+            color: #ffcc00;
             margin-bottom: 12px;
-            text-shadow: 0 0 10px rgba(200, 230, 201, 0.5);
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
         }
         
         .role-badge {
@@ -477,12 +476,12 @@
         }
         
         .mafia-badge {
-            background: #F44336;
+            background: #b21f1f;
         }
         
         .sheriff-badge {
-            background: #2196F3;
-            color: white;
+            background: #ffcc00;
+            color: black;
         }
         
         .civilian-badge {
@@ -518,7 +517,6 @@
             font-family: monospace;
             font-size: 0.9rem;
             letter-spacing: 1px;
-            color: #C8E6C9;
         }
         
         .copy-btn {
@@ -527,7 +525,6 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
-            color: #4CAF50;
         }
         
         .instructions {
@@ -537,11 +534,11 @@
             margin-top: 12px;
             font-size: 0.8rem;
             line-height: 1.4;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .instructions h3 {
-            color: #C8E6C9;
+            color: #ffcc00;
             margin-bottom: 6px;
             font-size: 0.95rem;
         }
@@ -565,7 +562,6 @@
             transition: all 0.3s;
             z-index: 10;
             font-size: 0.85rem;
-            border: 1px solid rgba(76, 175, 80, 0.3);
         }
         
         .firebase-status {
@@ -591,16 +587,16 @@
             border-radius: 8px;
             margin-top: 6px;
             font-size: 0.8rem;
-            border-left: 3px solid #4CAF50;
+            border-left: 3px solid #ffcc00;
         }
         
         /* Стили для чата */
         .chat-header {
-            background: #1a3a1c;
+            background: #1a1a2e;
             padding: 10px;
             text-align: center;
             font-weight: bold;
-            border-bottom: 1px solid #4CAF50;
+            border-bottom: 1px solid #444;
             font-size: 1rem;
             display: flex;
             justify-content: space-between;
@@ -619,8 +615,8 @@
         .chat-input-container {
             display: flex;
             padding: 8px;
-            background: #1a3a1c;
-            border-top: 1px solid #4CAF50;
+            background: #1a1a2e;
+            border-top: 1px solid #444;
             align-items: center;
         }
         
@@ -637,7 +633,7 @@
         
         .chat-send-btn {
             padding: 10px 16px;
-            background: #4CAF50;
+            background: #b21f1f;
             border: none;
             border-radius: 18px;
             color: white;
@@ -673,19 +669,19 @@
         
         .message-incoming {
             align-self: flex-start;
-            background: rgba(50, 70, 50, 0.8);
+            background: rgba(50, 50, 70, 0.8);
             border-bottom-left-radius: 5px;
         }
         
         .message-outgoing {
             align-self: flex-end;
-            background: rgba(60, 90, 60, 0.8);
+            background: rgba(70, 50, 120, 0.8);
             border-bottom-right-radius: 5px;
         }
         
         .system-message {
             align-self: center;
-            background: rgba(76, 175, 80, 0.2);
+            background: rgba(255, 204, 0, 0.2);
             text-align: center;
             padding: 6px 10px;
             border-radius: 18px;
@@ -710,14 +706,14 @@
             width: 100%;
             text-align: center;
             margin-bottom: 20px;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .profile-avatar {
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background: #8BC34A;
+            background: #4dabf7;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -739,13 +735,12 @@
             border-radius: 10px;
             padding: 15px;
             text-align: center;
-            border: 1px solid rgba(76, 175, 80, 0.3);
         }
         
         .stat-value {
             font-size: 1.8rem;
             font-weight: bold;
-            color: #C8E6C9;
+            color: #ffcc00;
             margin-bottom: 5px;
         }
         
@@ -770,7 +765,7 @@
             background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
             padding: 10px;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .room-item {
@@ -778,7 +773,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px;
-            border-bottom: 1px solid rgba(76, 175, 80, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s;
         }
         
@@ -787,7 +782,7 @@
         }
         
         .room-item:hover {
-            background: rgba(76, 175, 80, 0.1);
+            background: rgba(255, 255, 255, 0.1);
             cursor: pointer;
         }
         
@@ -857,10 +852,10 @@
         }
         
         .chat-popup {
-            background: rgba(40, 60, 40, 0.95);
+            background: rgba(40, 40, 60, 0.95);
             border-radius: 12px;
             padding: 12px 15px;
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid #4dabf7;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             animation: popupAppear 0.4s ease-out;
             backdrop-filter: blur(5px);
@@ -881,7 +876,7 @@
             font-weight: bold;
             font-size: 0.9rem;
             margin-bottom: 3px;
-            color: #C8E6C9;
+            color: #ffcc00;
         }
         
         .chat-popup-content {
@@ -912,28 +907,27 @@
         }
         
         .modal-content {
-            background: rgba(30, 50, 30, 0.95);
+            background: rgba(30, 30, 40, 0.95);
             border-radius: 20px;
             width: 90%;
             max-width: 500px;
             max-height: 80vh;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid #4CAF50;
         }
         
         .modal-header {
-            background: #1a3a1c;
+            background: #1a1a2e;
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #4CAF50;
+            border-bottom: 1px solid #444;
         }
         
         .modal-header h3 {
             font-size: 1.2rem;
-            color: #C8E6C9;
+            color: #ffcc00;
         }
         
         .close-modal-btn {
@@ -964,38 +958,6 @@
             padding: 4px 8px;
             border-radius: 12px;
             font-size: 0.9rem;
-        }
-        
-        /* Логотип Green Mafia */
-        .logo-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #4CAF50, #8BC34A);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
-        }
-        
-        .game-title {
-            font-size: 2.2rem;
-            font-weight: bold;
-            background: linear-gradient(to right, #C8E6C9, #8BC34A);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
         }
         
         /* Адаптация для очень маленьких экранов */
@@ -1071,8 +1033,8 @@
         
         <header>
             <div class="header-content">
-                <h1><i class="fas fa-user-secret"></i> GREEN MAFIA</h1>
-                <div class="subtitle">Играйте с друзьями в стиле GreenNaira</div>
+                <h1><i class="fas fa-user-secret"></i> МАФИЯ ДЛЯ СМАРТФОНА</h1>
+                <div class="subtitle">Играйте с друзьями и общайтесь в чате</div>
             </div>
             <div class="user-info" id="userInfo" style="display: none;">
                 <div class="user-avatar" id="userAvatar">?</div>
@@ -1086,12 +1048,7 @@
         <!-- Экран аутентификации -->
         <div id="authScreen" class="game-screen active">
             <div class="auth-container">
-                <div class="logo-container">
-                    <div class="logo">
-                        <i class="fas fa-leaf"></i>
-                    </div>
-                    <div class="game-title">GREEN MAFIA</div>
-                </div>
+                <h2>Вход / Регистрация</h2>
                 <div class="input-group">
                     <input type="text" id="emailInput" placeholder="Email">
                     <input type="password" id="passwordInput" placeholder="Пароль">
