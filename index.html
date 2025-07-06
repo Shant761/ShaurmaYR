@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Онлайн Мафия | VIP-режим и донаты</title>
+    <title>Онлайн Мафия | Улучшенный чат</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Обновлённые стили с улучшенным UI */
         * {
             margin: 0;
             padding: 0;
@@ -76,6 +77,7 @@
             padding-bottom: 10px;
         }
         
+        /* Стили для раздвижного чата */
         .chat-container {
             position: fixed;
             top: 0;
@@ -97,6 +99,7 @@
             transform: translateY(0);
         }
         
+        /* Кнопка чата в верхнем правом углу */
         .chat-toggle-btn {
             position: fixed;
             top: 70px;
@@ -115,6 +118,33 @@
             border: 2px solid rgba(255, 255, 255, 0.2);
         }
         
+        .chat-toggle-btn:hover {
+            transform: scale(1.1);
+            background: #8a1c1c;
+        }
+        
+        .chat-toggle-btn .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ffcc00;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .chat-icon {
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        /* Кнопка списка комнат */
         .rooms-toggle-btn {
             position: fixed;
             top: 130px;
@@ -133,6 +163,16 @@
             border: 2px solid rgba(255, 255, 255, 0.2);
         }
         
+        .rooms-toggle-btn:hover {
+            transform: scale(1.1);
+            background: #3d8b40;
+        }
+        
+        .rooms-icon {
+            font-size: 1.5rem;
+            color: white;
+        }
+        
         header {
             text-align: center;
             padding: 10px 15px;
@@ -143,6 +183,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(178, 31, 31, 0.3) 0%, rgba(0,0,0,0) 70%);
         }
         
         .header-content {
@@ -171,6 +221,13 @@
             font-size: 1.1rem;
         }
         
+        .user-name {
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
         .logout-btn {
             background: rgba(178, 31, 31, 0.7);
             border: none;
@@ -192,6 +249,12 @@
             position: relative;
         }
         
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            position: relative;
+        }
+        
         .server-status {
             position: absolute;
             top: 12px;
@@ -203,6 +266,15 @@
             padding: 4px 8px;
             border-radius: 12px;
             font-size: 0.75rem;
+        }
+        
+        .server-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            box-shadow: 0 0 8px #4CAF50;
         }
         
         .auth-container, .join-container, .lobby-container, .profile-container, .rooms-container {
@@ -235,6 +307,12 @@
             transition: all 0.3s;
         }
         
+        input:focus {
+            outline: none;
+            border-color: #ffcc00;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
         button {
             padding: 12px;
             background: linear-gradient(to right, #b21f1f, #8a1c1c);
@@ -247,6 +325,18 @@
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
+        }
+        
+        button:active {
+            transform: translateY(2px);
+            background: linear-gradient(to right, #a11919, #791919);
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .player-list {
@@ -272,937 +362,1070 @@
             justify-content: center;
         }
         
-        /* VIP стили */
-        .vip-user {
-            position: relative;
-            border: 2px solid gold;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-        
-        .vip-badge {
-            color: gold;
-            margin-left: 5px;
-            font-size: 0.8em;
-        }
-        
-        .vip-status {
-            background: linear-gradient(to right, #3a2a00, #5a4a20);
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px 0;
-            text-align: center;
-            border: 1px solid gold;
-        }
-        
-        .donate-menu {
-            margin: 15px 0;
-            text-align: center;
-        }
-        
-        #donateBtn {
-            background: linear-gradient(to right, #ffd700, #ffcc00);
-            color: #000;
+        .player-name {
             font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 4px;
         }
         
-        .donate-modal {
-            display: none;
+        .player-role {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        /* Стили для чата */
+        .chat-header {
+            background: #1a1a2e;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            padding: 8px;
+            background: #1a1a2e;
+            border-top: 1px solid #444;
+            align-items: center;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.95rem;
+            margin: 0 8px;
+        }
+        
+        .chat-send-btn {
+            padding: 10px 16px;
+            background: #b21f1f;
+            border: none;
+            border-radius: 18px;
+            color: white;
+            cursor: pointer;
+            min-width: 55px;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 8px 12px;
+            border-radius: 14px;
+            position: relative;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-size: 0.8rem;
+        }
+        
+        .message-content {
+            line-height: 1.3;
+        }
+        
+        .message-time {
+            font-size: 0.6rem;
+            opacity: 0.6;
+            text-align: right;
+            margin-top: 2px;
+        }
+        
+        .message-incoming {
+            align-self: flex-start;
+            background: rgba(50, 50, 70, 0.8);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message-outgoing {
+            align-self: flex-end;
+            background: rgba(70, 50, 120, 0.8);
+            border-bottom-right-radius: 5px;
+        }
+        
+        .system-message {
+            align-self: center;
+            background: rgba(255, 204, 0, 0.2);
+            text-align: center;
+            padding: 6px 10px;
+            border-radius: 18px;
+            font-size: 0.8rem;
+            margin: 4px 0;
+        }
+        
+        .close-chat-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        /* Стили для модального окна списка комнат */
+        .rooms-modal {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.8);
-            z-index: 3000;
+            z-index: 2000;
+            display: flex;
             justify-content: center;
             align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
         
-        .donate-modal .modal-content {
+        .rooms-modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
             background: rgba(30, 30, 40, 0.95);
             border-radius: 20px;
             width: 90%;
             max-width: 500px;
-            padding: 20px;
+            max-height: 80vh;
+            overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
         
-        .donate-options {
+        .modal-header {
+            background: #1a1a2e;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.2rem;
+            color: #ffcc00;
+        }
+        
+        .close-modal-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Адаптация для очень маленьких экранов */
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .player-list {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            
+            .chat-toggle-btn, .rooms-toggle-btn {
+                top: 60px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+            }
+            
+            .rooms-toggle-btn {
+                top: 115px;
+            }
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .phase-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            margin: 12px 0;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .night {
+            background: linear-gradient(to right, #1a237e, #283593);
+        }
+        
+        .day {
+            background: linear-gradient(to right, #c62828, #b71c1c);
+        }
+        
+        .action-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .action-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .action-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+        
+        .log-container {
+            margin-top: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 140px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+        }
+        
+        .log-title {
+            font-size: 1rem;
+            margin-bottom: 6px;
+            color: #ffcc00;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+        }
+        
+        .game-over {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .winner-title {
+            font-size: 1.6rem;
+            color: #ffcc00;
+            margin-bottom: 12px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 6px;
+        }
+        
+        .mafia-badge {
+            background: #b21f1f;
+        }
+        
+        .sheriff-badge {
+            background: #ffcc00;
+            color: black;
+        }
+        
+        .civilian-badge {
+            background: #4CAF50;
+        }
+        
+        .player-status {
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+        
+        .alive {
+            color: #4CAF50;
+        }
+        
+        .dead {
+            color: #f44336;
+            text-decoration: line-through;
+        }
+        
+        .room-info {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .room-id {
+            font-family: monospace;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        
+        .copy-btn {
+            padding: 6px 10px;
+            background: #444;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions h3 {
+            color: #ffcc00;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .instructions ul {
+            padding-left: 18px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            font-size: 0.85rem;
+        }
+        
+        .firebase-status {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 100, 0, 0.5);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        
+        .firebase-status.offline {
+            background: rgba(100, 0, 0, 0.5);
+        }
+        
+        .role-info {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 6px;
+            font-size: 0.8rem;
+            border-left: 3px solid #ffcc00;
+        }
+        
+        .modal-body {
+            padding: 15px;
+            max-height: calc(80vh - 70px);
+            overflow-y: auto;
+        }
+        
+        .rooms-list {
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .room-item:last-child {
+            border-bottom: none;
+        }
+        
+        .room-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+        
+        .room-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .room-status {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .room-status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-waiting {
+            background-color: #4CAF50;
+        }
+        
+        .room-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .join-room-btn {
+            padding: 8px 15px;
+            background: #4CAF50;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .join-room-btn:hover {
+            background: #3d8b40;
+            transform: scale(1.05);
+        }
+        
+        .chat-popup-container {
+            position: fixed;
+            bottom: 70px;
+            left: 10px;
+            right: 10px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .chat-popup {
+            background: rgba(40, 40, 60, 0.95);
+            border-radius: 12px;
+            padding: 12px 15px;
+            border-left: 4px solid #4dabf7;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: popupAppear 0.4s ease-out;
+            backdrop-filter: blur(5px);
+        }
+        
+        @keyframes popupAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .chat-popup-sender {
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+            color: #ffcc00;
+        }
+        
+        .chat-popup-content {
+            font-size: 0.95rem;
+            line-height: 1.3;
+        }
+        
+        .phase-timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+        
+        /* Профиль стили */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #4dabf7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+        
+        .profile-stats {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
-            margin: 15px 0;
+            width: 100%;
+            margin-top: 20px;
         }
         
-        .donate-option {
-            background: rgba(255, 255, 255, 0.1);
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 10px;
             padding: 15px;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid #444;
         }
         
-        .donate-option.selected {
-            border-color: gold;
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .donate-amount {
-            font-size: 1.2rem;
+        .stat-value {
+            font-size: 1.8rem;
             font-weight: bold;
-            color: gold;
+            color: #ffcc00;
+            margin-bottom: 5px;
         }
         
-        .donate-days {
+        .stat-label {
             font-size: 0.9rem;
             opacity: 0.8;
         }
         
-        .payment-methods {
+        .profile-actions {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 10px;
-            margin: 15px 0;
+            width: 100%;
         }
         
-        .payment-method {
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            border: 1px solid #444;
-        }
-        
-        .payment-method.active {
-            border-color: gold;
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        /* VIP роли в игре */
-        .player-card.vip {
-            border: 1px solid gold;
-            background: linear-gradient(to bottom right, rgba(30, 30, 0, 0.3), rgba(60, 60, 0, 0.5));
-        }
-        
-        .player-card.vip .player-name {
-            color: gold;
-        }
-        
-        /* Остальные стили... */
-        
-        @media (max-width: 768px) {
-            .donate-options {
-                grid-template-columns: 1fr;
+        /* Горизонтальная ориентация */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 750px;
+                height: 97vh;
+                margin: 10px auto;
+            }
+            
+            .chat-toggle-btn, .rooms-toggle-btn {
+                top: 80px;
+                right: 30px;
+            }
+            
+            .rooms-toggle-btn {
+                top: 140px;
             }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="firebase-status" id="firebaseStatus">
-            <i class="fas fa-database"></i> Firebase Online
-        </div>
-        
-        <!-- VIP статус -->
-        <div class="vip-status" id="vipStatus" style="display: none;">
-            <i class="fas fa-crown"></i> VIP до: <span id="vipExpireDate">Не активен</span>
-            <button id="buyVipBtn">Продлить VIP</button>
-        </div>
-        
-        <!-- Меню доната -->
-        <div class="donate-menu">
-            <button id="donateBtn"><i class="fas fa-gem"></i> Поддержать проект</button>
-        </div>
-        
-        <div class="chat-toggle-btn" id="chatToggleBtn">
-            <i class="fas fa-comment-dots chat-icon"></i>
-            <div class="badge" id="unreadBadge" style="display: none;">0</div>
-        </div>
-        
-        <div class="rooms-toggle-btn" id="roomsToggleBtn">
-            <i class="fas fa-door-open rooms-icon"></i>
-        </div>
-        
-        <header>
-            <div class="header-content">
-                <h1><i class="fas fa-user-secret"></i> МАФИЯ VIP</h1>
-                <div class="subtitle">Играйте с друзьями и получайте преимущества</div>
-            </div>
-            <div class="user-info" id="userInfo" style="display: none;">
-                <div class="user-avatar" id="userAvatar">?</div>
-                <div class="user-name" id="userName">Гость</div>
-                <button class="logout-btn" id="logoutBtn" title="Выйти">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </header>
-        
-        <!-- Экран аутентификации -->
-        <div id="authScreen" class="game-screen active">
-            <div class="auth-container">
-                <h2>Вход / Регистрация</h2>
-                <div class="input-group">
-                    <input type="text" id="emailInput" placeholder="Email">
-                    <input type="password" id="passwordInput" placeholder="Пароль">
-                    <div style="display: flex; gap: 10px;">
-                        <button id="loginBtn" style="flex: 1;">Войти</button>
-                        <button id="signupBtn" style="flex: 1;">Зарегистрироваться</button>
-                    </div>
-                    <button id="guestBtn">Играть как гость</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Экран профиля -->
-        <div id="profileScreen" class="game-screen">
-            <div class="back-btn" id="backToMainBtn">
-                <i class="fas fa-arrow-left"></i> Назад
-            </div>
-            
-            <div class="profile-container">
-                <div class="profile-card">
-                    <div class="profile-avatar" id="profileAvatar">?</div>
-                    <h2 id="profileName">Игрок</h2>
-                    <div id="profileEmail" class="subtitle">email@example.com</div>
-                    
-                    <div class="profile-stats">
-                        <div class="stat-card">
-                            <div class="stat-value" id="gamesPlayed">0</div>
-                            <div class="stat-label">Игр сыграно</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="gamesWon">0</div>
-                            <div class="stat-label">Побед</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="mafiaWins">0</div>
-                            <div class="stat-label">Побед мафией</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="civilianWins">0</div>
-                            <div class="stat-label">Побед мирным</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="profile-actions">
-                    <button id="playBtn">Играть</button>
-                    <button id="historyBtn">История игр</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Экран входа в игру -->
-        <div id="joinScreen" class="game-screen">
-            <div class="back-btn" id="backToProfileBtn">
-                <i class="fas fa-arrow-left"></i> Назад
-            </div>
-            
-            <div class="join-container">
-                <div class="input-group">
-                    <input type="text" id="roomIdInput" placeholder="Введите ID комнаты (MAF-1234)">
-                    <button id="joinRoomBtn">Присоединиться</button>
-                </div>
-                
-                <div class="input-group">
-                    <button id="createRoomBtn">Создать новую игру</button>
-                    <button id="createPrivateRoomBtn" style="background: linear-gradient(to right, #ffd700, #ffcc00); color: #000; display: none;">
-                        <i class="fas fa-crown"></i> Создать приватную игру
-                    </button>
-                </div>
-                
-                <div class="instructions">
-                    <h3><i class="fas fa-info-circle"></i> Как играть:</h3>
-                    <ul>
-                        <li>Создайте игру или присоединитесь по ID</li>
-                        <li>VIP-игроки могут создавать приватные комнаты</li>
-                        <li>Игра распределяет роли: Мафия, Шериф, Мирные</li>
-                        <li>VIP-игроки получают эксклюзивные роли</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Лобби -->
-        <div id="lobbyScreen" class="game-screen">
-            <div class="back-btn" id="backBtn">
-                <i class="fas fa-arrow-left"></i> Назад
-            </div>
-            
-            <div class="game-content">
-                <div class="game-main">
-                    <div class="lobby-container">
-                        <div class="room-info">
-                            <div>ID комнаты: <span id="roomId" class="room-id">MAF-0000</span></div>
-                            <div class="copy-btn" id="copyBtn"><i class="fas fa-copy"></i></div>
-                        </div>
-                        
-                        <div class="game-info">
-                            <div>Игроков: <span id="playerCount">0</span>/<span id="maxPlayers">5</span></div>
-                            <div>Статус: <span id="lobbyStatus">Ожидание</span></div>
-                        </div>
-                        
-                        <div class="player-list" id="playerList">
-                            <!-- Игроки будут добавляться здесь -->
-                        </div>
-                        
-                        <button id="startBtn" disabled>Начать игру</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Игровой экран -->
-        <div id="gameScreen" class="game-screen">
-            <div class="back-btn" id="backToLobbyBtn">
-                <i class="fas fa-arrow-left"></i>
-            </div>
-            
-            <div class="game-content">
-                <div class="game-main">
-                    <div class="phase-timer" id="phaseTimer">02:00</div>
-                    
-                    <div class="game-info">
-                        <div>Игроков: <span id="gamePlayerCount">0</span>/<span id="gameMaxPlayers">5</span></div>
-                        <div>День: <span id="dayCount">1</span></div>
-                    </div>
-                    
-                    <div id="phaseDisplay" class="phase-display night">НОЧЬ</div>
-                    
-                    <div class="action-container">
-                        <div class="action-card">
-                            <div class="action-title">Ваша роль</div>
-                            <div id="playerRole">Ожидание...</div>
-                            <div class="role-info" id="roleInfo">Описание роли появится здесь</div>
-                            <div id="playerStatus" class="player-status alive">Статус: жив</div>
-                        </div>
-                        
-                        <div class="action-card">
-                            <div class="action-title">Ваше действие</div>
-                            <div id="actionDescription">Ожидайте начала игры...</div>
-                            <div id="actionButtons" style="margin-top: 8px;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="log-container">
-                        <div class="log-title"><i class="fas fa-scroll"></i> События</div>
-                        <div id="gameLog">
-                            <div class="log-entry">Игра началась. Наступает ночь...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Экран результатов -->
-        <div id="resultScreen" class="game-screen">
-            <div class="game-over">
-                <div id="winnerTitle" class="winner-title">Победа мирных жителей!</div>
-                <div class="player-list" id="resultPlayerList">
-                    <!-- Результаты игроков будут здесь -->
-                </div>
-                <button id="restartBtn"><i class="fas fa-redo"></i> Новая игра</button>
-            </div>
-        </div>
-        
-        <!-- Чат -->
-        <div class="chat-container" id="chatContainer">
-            <div class="chat-header">
-                <span><i class="fas fa-comments"></i> Игровой чат</span>
-                <button class="close-chat-btn" id="closeChatBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="system-message">Добро пожаловать в чат! Начните общение с другими игроками.</div>
-            </div>
-            <div class="chat-input-container">
-                <input type="text" class="chat-input" id="chatInput" placeholder="Напишите сообщение...">
-                <button class="chat-send-btn" id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-        
-        <!-- Модальное окно списка комнат -->
-        <div class="rooms-modal" id="roomsModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-door-open"></i> Доступные комнаты</h3>
-                    <button class="close-modal-btn" id="closeRoomsModalBtn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="rooms-list" id="roomsList">
-                        <div class="room-item">
-                            <div class="room-details">
-                                <div class="room-id">Загрузка комнат...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Модальное окно доната -->
-        <div class="donate-modal" id="donateModal">
-            <div class="modal-content">
-                <h3><i class="fas fa-gem"></i> Приобрести VIP-статус</h3>
-                <div class="donate-options">
-                    <div class="donate-option" data-amount="99" data-days="7">
-                        <div class="donate-amount">99 ₽</div>
-                        <div class="donate-days">7 дней VIP</div>
-                    </div>
-                    <div class="donate-option" data-amount="299" data-days="30">
-                        <div class="donate-amount">299 ₽</div>
-                        <div class="donate-days">30 дней VIP</div>
-                    </div>
-                    <div class="donate-option" data-amount="999" data-days="0">
-                        <div class="donate-amount">999 ₽</div>
-                        <div class="donate-days">VIP навсегда</div>
-                    </div>
-                    <div class="donate-option" data-amount="199" data-days="0">
-                        <div class="donate-amount">199 ₽</div>
-                        <div class="donate-days">Поддержка</div>
-                    </div>
-                </div>
-                <div class="payment-methods">
-                    <div class="payment-method active" data-method="card">
-                        <i class="fab fa-cc-visa"></i> Карта
-                    </div>
-                    <div class="payment-method" data-method="yoomoney">
-                        <i class="fas fa-wallet"></i> ЮMoney
-                    </div>
-                    <div class="payment-method" data-method="qiwi">
-                        <i class="fab fa-qiwi"></i> Qiwi
-                    </div>
-                </div>
-                <button id="confirmDonateBtn">Оплатить</button>
-                <button id="closeDonateModal" style="margin-top: 10px; background: #555;">Отмена</button>
-            </div>
-        </div>
-        
-        <!-- Контейнер для popup сообщений -->
-        <div class="chat-popup-container" id="chatPopupContainer"></div>
-    </div>
+  <body>
+      <div class="container">
+          <div class="firebase-status" id="firebaseStatus">
+              <i class="fas fa-database"></i> Firebase Online
+          </div>
+          
+          <!-- Кнопка чата в верхнем правом углу -->
+          <div class="chat-toggle-btn" id="chatToggleBtn">
+              <i class="fas fa-comment-dots chat-icon"></i>
+              <div class="badge" id="unreadBadge" style="display: none;">0</div>
+          </div>
+          
+          <!-- Кнопка списка комнат -->
+          <div class="rooms-toggle-btn" id="roomsToggleBtn">
+              <i class="fas fa-door-open rooms-icon"></i>
+          </div>
+          
+          <header>
+              <div class="header-content">
+                  <h1><i class="fas fa-user-secret"></i> МАФИЯ ДЛЯ СМАРТФОНА</h1>
+                  <div class="subtitle">Играйте с друзьями и общайтесь в чате</div>
+              </div>
+              <div class="user-info" id="userInfo" style="display: none;">
+                  <div class="user-avatar" id="userAvatar">?</div>
+                  <div class="user-name" id="userName">Гость</div>
+                  <button class="logout-btn" id="logoutBtn" title="Выйти">
+                      <i class="fas fa-sign-out-alt"></i>
+                  </button>
+              </div>
+          </header>
+          
+          <!-- Экран аутентификации -->
+          <div id="authScreen" class="game-screen active">
+              <div class="auth-container">
+                  <h2>Вход / Регистрация</h2>
+                  <div class="input-group">
+                      <input type="text" id="emailInput" placeholder="Email">
+                      <input type="password" id="passwordInput" placeholder="Пароль">
+                      <div style="display: flex; gap: 10px;">
+                          <button id="loginBtn" style="flex: 1;">Войти</button>
+                          <button id="signupBtn" style="flex: 1;">Зарегистрироваться</button>
+                      </div>
+                      <button id="guestBtn">Играть как гость</button>
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Экран профиля -->
+          <div id="profileScreen" class="game-screen">
+              <div class="back-btn" id="backToMainBtn">
+                  <i class="fas fa-arrow-left"></i> Назад
+              </div>
+              
+              <div class="profile-container">
+                  <div class="profile-card">
+                      <div class="profile-avatar" id="profileAvatar">?</div>
+                      <h2 id="profileName">Игрок</h2>
+                      <div id="profileEmail" class="subtitle">email@example.com</div>
+                      
+                      <div class="profile-stats">
+                          <div class="stat-card">
+                              <div class="stat-value" id="gamesPlayed">0</div>
+                              <div class="stat-label">Игр сыграно</div>
+                          </div>
+                          <div class="stat-card">
+                              <div class="stat-value" id="gamesWon">0</div>
+                              <div class="stat-label">Побед</div>
+                          </div>
+                          <div class="stat-card">
+                              <div class="stat-value" id="mafiaWins">0</div>
+                              <div class="stat-label">Побед мафией</div>
+                          </div>
+                          <div class="stat-card">
+                              <div class="stat-value" id="civilianWins">0</div>
+                              <div class="stat-label">Побед мирным</div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div class="profile-actions">
+                      <button id="playBtn">Играть</button>
+                      <button id="historyBtn">История игр</button>
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Экран входа в игру -->
+          <div id="joinScreen" class="game-screen">
+              <div class="back-btn" id="backToProfileBtn">
+                  <i class="fas fa-arrow-left"></i> Назад
+              </div>
+              
+              <div class="join-container">
+                  <div class="input-group">
+                      <input type="text" id="roomIdInput" placeholder="Введите ID комнаты (MAF-1234)">
+                      <button id="joinRoomBtn">Присоединиться</button>
+                  </div>
+                  
+                  <div class="input-group">
+                      <button id="createRoomBtn">Создать новую игру</button>
+                  </div>
+                  
+                  <div class="instructions">
+                      <h3><i class="fas fa-info-circle"></i> Как играть:</h3>
+                      <ul>
+                          <li>Создайте игру или присоединитесь по ID</li>
+                          <li>Игра распределяет роли: Мафия, Шериф, Мирные</li>
+                          <li>Ночью мафия убивает, шериф проверяет</li>
+                          <li>Днём обсуждайте и голосуйте за подозреваемого</li>
+                          <li>Общайтесь с игроками в чате</li>
+                      </ul>
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Лобби -->
+          <div id="lobbyScreen" class="game-screen">
+              <div class="back-btn" id="backBtn">
+                  <i class="fas fa-arrow-left"></i> Назад
+              </div>
+              
+              <div class="game-content">
+                  <div class="game-main">
+                      <div class="lobby-container">
+                          <div class="room-info">
+                              <div>ID комнаты: <span id="roomId" class="room-id">MAF-0000</span></div>
+                              <div class="copy-btn" id="copyBtn"><i class="fas fa-copy"></i></div>
+                          </div>
+                          
+                          <div class="game-info">
+                              <div>Игроков: <span id="playerCount">0</span>/5</div>
+                              <div>Статус: <span id="lobbyStatus">Ожидание</span></div>
+                          </div>
+                          
+                          <div class="player-list" id="playerList">
+                              <!-- Игроки будут добавляться здесь -->
+                          </div>
+                          
+                          <button id="startBtn" disabled>Начать игру</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Игровой экран -->
+          <div id="gameScreen" class="game-screen">
+              <div class="back-btn" id="backToLobbyBtn">
+                  <i class="fas fa-arrow-left"></i>
+              </div>
+              
+              <div class="game-content">
+                  <div class="game-main">
+                      <div class="phase-timer" id="phaseTimer">02:00</div>
+                      
+                      <div class="game-info">
+                          <div>Игроков: <span id="gamePlayerCount">0</span>/5</div>
+                          <div>День: <span id="dayCount">1</span></div>
+                      </div>
+                      
+                      <div id="phaseDisplay" class="phase-display night">НОЧЬ</div>
+                      
+                      <div class="action-container">
+                          <div class="action-card">
+                              <div class="action-title">Ваша роль</div>
+                              <div id="playerRole">Ожидание...</div>
+                              <div class="role-info" id="roleInfo">Описание роли появится здесь</div>
+                              <div id="playerStatus" class="player-status alive">Статус: жив</div>
+                          </div>
+                          
+                          <div class="action-card">
+                              <div class="action-title">Ваше действие</div>
+                              <div id="actionDescription">Ожидайте начала игры...</div>
+                              <div id="actionButtons" style="margin-top: 8px;"></div>
+                          </div>
+                      </div>
+                      
+                      <div class="log-container">
+                          <div class="log-title"><i class="fas fa-scroll"></i> События</div>
+                          <div id="gameLog">
+                              <div class="log-entry">Игра началась. Наступает ночь...</div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Экран результатов -->
+          <div id="resultScreen" class="game-screen">
+              <div class="game-over">
+                  <div id="winnerTitle" class="winner-title">Победа мирных жителей!</div>
+                  <div class="player-list" id="resultPlayerList">
+                      <!-- Результаты игроков будут здесь -->
+                  </div>
+                  <button id="restartBtn"><i class="fas fa-redo"></i> Новая игра</button>
+              </div>
+          </div>
+          
+          <!-- Раздвижной чат -->
+          <div class="chat-container" id="chatContainer">
+              <div class="chat-header">
+                  <span><i class="fas fa-comments"></i> Игровой чат</span>
+                  <button class="close-chat-btn" id="closeChatBtn">
+                      <i class="fas fa-times"></i>
+                  </button>
+              </div>
+              <div class="chat-messages" id="chatMessages">
+                  <div class="system-message">Добро пожаловать в чат! Начните общение с другими игроками.</div>
+              </div>
+              <div class="chat-input-container">
+                  <input type="text" class="chat-input" id="chatInput" placeholder="Напишите сообщение...">
+                  <button class="chat-send-btn" id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
+              </div>
+          </div>
+          
+          <!-- Модальное окно списка комнат -->
+          <div class="rooms-modal" id="roomsModal">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <h3><i class="fas fa-door-open"></i> Доступные комнаты</h3>
+                      <button class="close-modal-btn" id="closeRoomsModalBtn">&times;</button>
+                  </div>
+                  <div class="modal-body">
+                      <div class="rooms-list" id="roomsList">
+                          <div class="room-item">
+                              <div class="room-details">
+                                  <div class="room-id">Загрузка комнат...</div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Контейнер для popup сообщений -->
+          <div class="chat-popup-container" id="chatPopupContainer"></div>
+      </div>
 
-    <script>
-        // Конфигурация Firebase
-        const firebaseConfig = {
-  apiKey: "AIzaSyDrOAhG2hQphTC8xmI_L1HD835Z101GPAI",
-  authDomain: "grean-mafia.firebaseapp.com",
-  databaseURL: "https://grean-mafia-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "grean-mafia",
-  storageBucket: "grean-mafia.firebasestorage.app",
-  messagingSenderId: "603308315781",
-  appId: "1:603308315781:web:053d9551ed6516477905ec"
-};
-        
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
-        
-        // Расширенное состояние игры с VIP-данными
-        let gameState = {
-            roomId: '',
-            players: [],
-            currentPlayer: null,
-            dayCount: 1,
-            phase: 'night',
-            gameOver: false,
-            winner: null,
-            logs: [],
-            votes: {},
-            killTarget: null,
-            checkTarget: null,
-            chatMessages: [],
-            status: 'waiting',
-            phaseEndTime: 0,
-            phaseDuration: 120000,
-            maxPlayers: 5,
-            isPrivate: false
-        };
-        
-        // Расширенные данные игрока
-        let currentPlayer = {
-            id: null,
-            name: '',
-            role: null,
-            status: 'alive',
-            isHost: false,
-            isVip: false,
-            vipExpire: null,
-            lastSeen: Date.now()
-        };
-        
-        // Расширенная статистика пользователя
-        let userStats = {
-            gamesPlayed: 0,
-            gamesWon: 0,
-            mafiaWins: 0,
-            civilianWins: 0,
-            totalDonated: 0,
-            lastDonation: null,
-            vipExpire: null
-        };
-        
-        // Расширенные роли с VIP-ролями
-        const baseRoles = ['mafia', 'sheriff', 'civilian', 'civilian', 'civilian'];
-        const vipRoles = ['mafia', 'sheriff', 'doctor', 'maniac', 'civilian', 'civilian', 'civilian', 'civilian'];
-        
-        // Перевод ролей с VIP-ролями
-        const roleTranslations = {
-            'mafia': 'Мафия',
-            'sheriff': 'Шериф',
-            'civilian': 'Мирный',
-            'doctor': 'Доктор',
-            'maniac': 'Маньяк'
-        };
-        
-        // Описания ролей с VIP-ролями
-        const roleDescriptions = {
-            'mafia': "Вы - мафия! Ночью устраняйте игроков. Днём не попадитесь. Цель - остаться в большинстве.",
-            'sheriff': "Вы - шериф! Ночью проверяйте игроков. Днём помогайте мирным найти мафию.",
-            'civilian': "Вы - мирный житель! Ночью спите. Днём обсуждайте и голосуйте, чтобы найти мафию.",
-            'doctor': "Вы - доктор! Ночью можете спасти одного игрока от убийства (VIP-роль).",
-            'maniac': "Вы - маньяк! Играете за себя, можете убивать ночью (VIP-роль)."
-        };
-        
-        // DOM элементы
-        const authScreen = document.getElementById('authScreen');
-        const profileScreen = document.getElementById('profileScreen');
-        const joinScreen = document.getElementById('joinScreen');
-        const lobbyScreen = document.getElementById('lobbyScreen');
-        const gameScreen = document.getElementById('gameScreen');
-        const resultScreen = document.getElementById('resultScreen');
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const loginBtn = document.getElementById('loginBtn');
-        const signupBtn = document.getElementById('signupBtn');
-        const guestBtn = document.getElementById('guestBtn');
-        const userInfo = document.getElementById('userInfo');
-        const userAvatar = document.getElementById('userAvatar');
-        const userName = document.getElementById('userName');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const profileAvatar = document.getElementById('profileAvatar');
-        const profileName = document.getElementById('profileName');
-        const profileEmail = document.getElementById('profileEmail');
-        const gamesPlayed = document.getElementById('gamesPlayed');
-        const gamesWon = document.getElementById('gamesWon');
-        const mafiaWins = document.getElementById('mafiaWins');
-        const civilianWins = document.getElementById('civilianWins');
-        const playBtn = document.getElementById('playBtn');
-        const roomIdInput = document.getElementById('roomIdInput');
-        const joinRoomBtn = document.getElementById('joinRoomBtn');
-        const createRoomBtn = document.getElementById('createRoomBtn');
-        const createPrivateRoomBtn = document.getElementById('createPrivateRoomBtn');
-        const startBtn = document.getElementById('startBtn');
-        const playerList = document.getElementById('playerList');
-        const playerCount = document.getElementById('playerCount');
-        const maxPlayers = document.getElementById('maxPlayers');
-        const gamePlayerCount = document.getElementById('gamePlayerCount');
-        const gameMaxPlayers = document.getElementById('gameMaxPlayers');
-        const dayCount = document.getElementById('dayCount');
-        const phaseDisplay = document.getElementById('phaseDisplay');
-        const playerRole = document.getElementById('playerRole');
-        const roleInfo = document.getElementById('roleInfo');
-        const playerStatus = document.getElementById('playerStatus');
-        const actionDescription = document.getElementById('actionDescription');
-        const actionButtons = document.getElementById('actionButtons');
-        const gameLog = document.getElementById('gameLog');
-        const resultPlayerList = document.getElementById('resultPlayerList');
-        const winnerTitle = document.getElementById('winnerTitle');
-        const restartBtn = document.getElementById('restartBtn');
-        const roomIdElement = document.getElementById('roomId');
-        const copyBtn = document.getElementById('copyBtn');
-        const backBtn = document.getElementById('backBtn');
-        const backToLobbyBtn = document.getElementById('backToLobbyBtn');
-        const backToMainBtn = document.getElementById('backToMainBtn');
-        const backToProfileBtn = document.getElementById('backToProfileBtn');
-        const lobbyStatus = document.getElementById('lobbyStatus');
-        const firebaseStatus = document.getElementById('firebaseStatus');
-        const roomsList = document.getElementById('roomsList');
-        const phaseTimer = document.getElementById('phaseTimer');
-        const vipStatus = document.getElementById('vipStatus');
-        const vipExpireDate = document.getElementById('vipExpireDate');
-        const buyVipBtn = document.getElementById('buyVipBtn');
-        const donateBtn = document.getElementById('donateBtn');
-        const donateModal = document.getElementById('donateModal');
-        const closeDonateModal = document.getElementById('closeDonateModal');
-        const confirmDonateBtn = document.getElementById('confirmDonateBtn');
-        
-        // Чат элементы
-        const chatContainer = document.getElementById('chatContainer');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const chatSendBtn = document.getElementById('chatSendBtn');
-        const chatToggleBtn = document.getElementById('chatToggleBtn');
-        const closeChatBtn = document.getElementById('closeChatBtn');
-        const unreadBadge = document.getElementById('unreadBadge');
-        const chatPopupContainer = document.getElementById('chatPopupContainer');
-        
-        // Комнаты элементы
-        const roomsToggleBtn = document.getElementById('roomsToggleBtn');
-        const roomsModal = document.getElementById('roomsModal');
-        const closeRoomsModalBtn = document.getElementById('closeRoomsModalBtn');
-        
-        // Состояние чата
-        let unreadMessages = 0;
-        let lastSeenMessageTime = 0;
-        let currentUser = null;
-        let timerInterval = null;
-        
-        // Инициализация игры
-        function initGame() {
-            // Обработчики для новых элементов
-            donateBtn.addEventListener('click', openDonateModal);
-            buyVipBtn.addEventListener('click', openDonateModal);
-            closeDonateModal.addEventListener('click', closeDonateModal);
-            confirmDonateBtn.addEventListener('click', processDonation);
-            
-            // Настройка выбора вариантов доната
-            document.querySelectorAll('.donate-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    document.querySelectorAll('.donate-option').forEach(o => o.classList.remove('selected'));
-                    this.classList.add('selected');
-                });
-            });
-            
-            // Настройка выбора метода оплаты
-            document.querySelectorAll('.payment-method').forEach(method => {
-                method.addEventListener('click', function() {
-                    document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            // Обработчики событий аутентификации
-            loginBtn.addEventListener('click', loginUser);
-            signupBtn.addEventListener('click', signupUser);
-            guestBtn.addEventListener('click', playAsGuest);
-            logoutBtn.addEventListener('click', logoutUser);
-            playBtn.addEventListener('click', goToJoinScreen);
-            backToMainBtn.addEventListener('click', goToAuthScreen);
-            backToProfileBtn.addEventListener('click', goToProfileScreen);
-            
-            // Обработчики игровых событий
-            joinRoomBtn.addEventListener('click', joinRoom);
-            createRoomBtn.addEventListener('click', () => createRoom(false));
-            createPrivateRoomBtn.addEventListener('click', () => createRoom(true));
-            startBtn.addEventListener('click', startGame);
-            restartBtn.addEventListener('click', restartGame);
-            copyBtn.addEventListener('click', copyRoomId);
-            backBtn.addEventListener('click', goBackToJoinScreen);
-            backToLobbyBtn.addEventListener('click', goBackToLobby);
-            
-            // Обработчики чата
-            chatSendBtn.addEventListener('click', sendChatMessage);
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendChatMessage();
-            });
-            
-            chatToggleBtn.addEventListener('click', toggleChat);
-            closeChatBtn.addEventListener('click', closeChat);
-            
-            // Обработчики списка комнат
-            roomsToggleBtn.addEventListener('click', openRoomsModal);
-            closeRoomsModalBtn.addEventListener('click', closeRoomsModal);
-            
-            // Клик вне модального окна для закрытия
-            roomsModal.addEventListener('click', (e) => {
-                if (e.target === roomsModal) closeRoomsModal();
-            });
-            
-            donateModal.addEventListener('click', (e) => {
-                if (e.target === donateModal) closeDonateModal();
-            });
-            
-            // Авто-заполнение для демонстрации
-            roomIdInput.value = '';
-            emailInput.value = 'test@example.com';
-            passwordInput.value = 'password';
-            
-            // Проверка статуса Firebase
-            checkFirebaseConnection();
-            
-            // Проверка состояния аутентификации
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    showProfileScreen();
-                    loadUserStats();
-                    checkVipStatus();
-                } else {
-                    authScreen.classList.add('active');
-                    profileScreen.classList.remove('active');
-                    userInfo.style.display = 'none';
-                }
-            });
-        }
-        
-        // Проверка VIP-статуса
-        function checkVipStatus() {
-            if (!currentUser) return;
-            
-            // Проверяем локальное хранилище
-            const localVipExpire = localStorage.getItem(`vipExpire_${currentUser.uid}`);
-            if (localVipExpire) {
-                const expireDate = new Date(localVipExpire);
-                if (expireDate > new Date()) {
-                    currentPlayer.isVip = true;
-                    currentPlayer.vipExpire = expireDate;
-                    updateVipUI(true, expireDate);
-                    return;
-                }
-            }
-            
-            // Проверяем Firebase
-            const userRef = database.ref(`users/${currentUser.uid}/vipExpire`);
-            userRef.once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    const expireDate = new Date(snapshot.val());
-                    if (expireDate > new Date()) {
-                        currentPlayer.isVip = true;
-                        currentPlayer.vipExpire = expireDate;
-                        localStorage.setItem(`vipExpire_${currentUser.uid}`, expireDate.toString());
-                        updateVipUI(true, expireDate);
-                    }
-                }
-            });
-        }
-        
-        // Обновление интерфейса для VIP-пользователей
-        function updateVipUI(isVip, expireDate) {
-            if (isVip) {
-                vipStatus.style.display = 'block';
-                vipExpireDate.textContent = expireDate.toLocaleDateString();
-                document.querySelector('.user-info').classList.add('vip-user');
-                createPrivateRoomBtn.style.display = 'block';
-                
-                // Обновляем бейдж в профиле
-                if (profileName.textContent) {
-                    profileName.innerHTML = `${profileName.textContent} <i class="fas fa-crown vip-badge"></i>`;
-                }
-            } else {
-                vipStatus.style.display = 'none';
-                document.querySelector('.user-info').classList.remove('vip-user');
-                createPrivateRoomBtn.style.display = 'none';
-            }
-        }
-        
-        // Открытие модального окна доната
-        function openDonateModal() {
-            donateModal.style.display = 'flex';
-        }
-        
-        // Закрытие модального окна доната
-        function closeDonateModal() {
-            donateModal.style.display = 'none';
-        }
-        
-        // Обработка доната (имитация)
-        function processDonation() {
-            const selectedOption = document.querySelector('.donate-option.selected');
-            if (!selectedOption) {
-                alert('Выберите вариант подписки');
-                return;
-            }
-            
-            const amount = selectedOption.dataset.amount;
-            const days = selectedOption.dataset.days;
-            const method = document.querySelector('.payment-method.active').dataset.method;
-            
-            // Здесь должна быть реальная интеграция с платежной системой
-            // Для демонстрации просто имитируем успешный платеж
-            
-            // Вычисляем дату окончания VIP
-            let expireDate = new Date();
-            if (days > 0) {
-                expireDate.setDate(expireDate.getDate() + parseInt(days));
-            } else if (amount == 999) {
-                // "Навсегда" - устанавливаем дату через 10 лет
-                expireDate.setFullYear(expireDate.getFullYear() + 10);
-            } else {
-                // Просто донат без VIP
-                alert('Спасибо за поддержку проекта!');
-                closeDonateModal();
-                return;
-            }
-            
-            // Обновляем статус пользователя
-            currentPlayer.isVip = true;
-            currentPlayer.vipExpire = expireDate;
-            
-            // Сохраняем в Firebase
-            if (currentUser) {
-                const userRef = database.ref(`users/${currentUser.uid}`);
-                userRef.update({
-                    vipExpire: expireDate.toString(),
-                    totalDonated: (userStats.totalDonated || 0) + parseInt(amount),
-                    lastDonation: new Date().toString()
-                });
-                
-                // Обновляем локальные данные
-                localStorage.setItem(`vipExpire_${currentUser.uid}`, expireDate.toString());
-                userStats.vipExpire = expireDate.toString();
-                userStats.totalDonated += parseInt(amount);
-            }
-            
-            // Обновляем интерфейс
-            updateVipUI(true, expireDate);
-            closeDonateModal();
-            
-            // Показываем благодарность
-            alert(`Спасибо за поддержку! Ваш VIP-статус активен до ${expireDate.toLocaleDateString()}`);
-            
-            // Если это создатель комнаты, увеличиваем лимит игроков
-            if (currentPlayer.isHost && gameState.roomId) {
-                gameState.maxPlayers = 8;
-                maxPlayers.textContent = '8';
-                saveGameState();
-            }
-        }
-        
-        // Создание комнаты (обновленная с VIP-функциями)
-        function createRoom(isPrivate) {
-            const name = getPlayerName();
-            const roomId = 'MAF-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-            
-            const playerId = generatePlayerId();
-            currentPlayer = {
-                id: playerId,
-                name: name,
-                role: null,
-                status: 'alive',
-                isHost: true,
-                isVip: userStats.vipExpire && new Date(userStats.vipExpire) > new Date(),
-                vipExpire: userStats.vipExpire,
-                lastSeen: Date.now()
-            };
-            
-            gameState = {
-                roomId: roomId,
-                players: [currentPlayer],
-                currentPlayer: null,
-                dayCount: 1,
-                phase: 'lobby',
-                gameOver: false,
-                winner: null,
-                logs: [{message: `Комната создана. ${name} присоединился как создатель.`, timestamp: Date.now()}],
-                votes: {},
-                killTarget: null,
-                checkTarget: null,
-                chatMessages: [{
-                    isSystem: true,
-                    text: `Игра создана. ${name} присоединился как создатель. ${isPrivate ? '(Приватная)' : ''}`,
-                    timestamp: Date.now()
-                }],
-                status: 'waiting',
-                phaseEndTime: 0,
-                phaseDuration: 120000,
-                maxPlayers: currentPlayer.isVip ? 8 : 5,
-                isPrivate: isPrivate
-            };
-            
-            saveGameState();
-            roomIdElement.textContent = roomId;
-            maxPlayers.textContent = gameState.maxPlayers;
-            joinScreen.classList.remove('active');
-            lobbyScreen.classList.add('active');
-            updateLobby();
-            listenForGameChanges();
-        }
-        
-        // Остальные функции из предыдущей версии с модификациями для VIP...
-        
-        // Начало игры с учетом VIP-ролей
-        function startGame() {
-            // Выбираем роли в зависимости от наличия VIP-игроков
-            const hasVip = gameState.players.some(p => p.isVip);
-            const rolesToUse = hasVip ? [...vipRoles] : [...baseRoles];
-            
-            // Перемешиваем роли
-            for (let i = rolesToUse.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [rolesToUse[i], rolesToUse[j]] = [rolesToUse[j], rolesToUse[i]];
-            }
-            
-            // Назначаем роли
-            gameState.players.forEach((player, index) => {
-                player.role = rolesToUse[index] || 'civilian';
-            });
-            
-            // Добавляем сообщение в чат
-            gameState.chatMessages.push({
-                isSystem: true,
-                text: 'Игра началась! Наступает ночь...',
-                timestamp: Date.now()
-            });
-            
-            // Устанавливаем первого игрока
-            gameState.currentPlayer = gameState.players[0].id;
-            gameState.phase = 'night';
-            gameState.status = 'in-progress';
-            gameState.logs = [{message: 'Игра началась! Наступает ночь...', timestamp: Date.now()}];
-            gameState.phaseEndTime = Date.now() + gameState.phaseDuration;
-            
-            saveGameState();
-        }
-        
-        // Обновление лобби с VIP-игроками
-        function updateLobby() {
-            playerList.innerHTML = '';
-            playerCount.textContent = gameState.players.length;
-            maxPlayers.textContent = gameState.maxPlayers;
-            
-            if (gameState.players.length === 0) {
-                lobbyStatus.textContent = 'Ожидание игроков';
-            } else if (gameState.players.length < 3) {
-                lobbyStatus.textContent = `Ожидание игроков (минимум 3)`;
-            } else if (gameState.players.length < gameState.maxPlayers) {
-                lobbyStatus.textContent = `Ожидание игроков (${gameState.maxPlayers - gameState.players.length} из ${gameState.maxPlayers})`;
-            } else {
-                lobbyStatus.textContent = 'Лобби заполнено!';
-            }
-            
-            startBtn.disabled = !(currentPlayer.isHost && gameState.players.length >= 3);
-            
-            gameState.players.forEach(player => {
-                const playerCard = renderPlayerInLobby(player);
-                playerList.appendChild(playerCard);
-            });
-        }
-        
-        // Рендер игрока в лобби с VIP-статусом
-        function renderPlayerInLobby(player) {
-            const playerCard = document.createElement('div');
-            playerCard.className = `player-card ${player.isHost ? 'host' : ''} ${player.isVip ? 'vip' : ''}`;
-            
-            let playerInfo = `<div class="player-name">${player.name}`;
-            if (player.isVip) playerInfo += ` <i class="fas fa-crown vip-badge"></i>`;
-            playerInfo += `</div>`;
-            
-            if (player.isHost) {
-                playerInfo += `<div class="player-status"><i class="fas fa-crown"></i> Создатель</div>`;
-            } else {
-                playerInfo += `<div class="player-status">Ожидание...</div>`;
-            }
-            
-            playerCard.innerHTML = playerInfo;
-            return playerCard;
-        }
-        
-        // Остальные функции (loginUser, signupUser, playAsGuest, logoutUser, showProfileScreen, 
-        // getPlayerName, goToJoinScreen, goToAuthScreen, goToProfileScreen, saveUserStats, 
-        // loadUserStats, updateProfileStats, updateStatsAfterGame, checkFirebaseConnection, 
-        // sendChatMessage, renderChatMessages, updateUnreadBadge, toggleChat, closeChat, 
-        // copyRoomId, joinRoom, generatePlayerId, loadGameState, saveGameState, listenForGameChanges, 
-        // updateGameScreen, updatePhaseTimer, updateActionDescription, renderPlayerActions, 
-        // addLog, updateGameLog, nextPlayer, endPhase, checkGameOver, endGame, updateResultScreen, 
-        // restartGame, goBackToJoinScreen, goBackToLobby, openRoomsModal, closeRoomsModal, loadRoomsList)
-        // остаются такими же, как в предыдущей версии, но с учетом новых полей в объектах
-        
-        // Инициализация при загрузке
-        window.onload = initGame;
-    </script>
-</body>
+      <script>
+          // Конфиг Firebase
+          const firebaseConfig = {
+              apiKey: "AIzaSyANu2uYjM3JvJ2x0kK0aT7a8r1Qz4w3v4k",
+              authDomain: "mafia-game-12345.firebaseapp.com",
+              databaseURL: "https://mafia-game-12345-default-rtdb.firebaseio.com",
+              projectId: "mafia-game-12345",
+              storageBucket: "mafia-game-12345.appspot.com",
+              messagingSenderId: "123456789012",
+              appId: "1:123456789012:web:abcdef1234567890abcdef"
+          };
+          
+          // Инициализация Firebase
+          firebase.initializeApp(firebaseConfig);
+          const database = firebase.database();
+          const auth = firebase.auth();
+          
+          // Состояние игры
+          let gameState = {
+              roomId: '',
+              players: [],
+              currentPlayer: null,
+              dayCount: 1,
+              phase: 'night',
+              gameOver: false,
+              winner: null,
+              logs: [],
+              votes: {},
+              killTarget: null,
+              checkTarget: null,
+              chatMessages: [],
+              status: 'waiting',
+              phaseEndTime: 0,
+              phaseDuration: 120000 // 2 минуты по умолчанию
+          };
+          
+          // Текущий игрок
+          let currentPlayer = {
+              id: null,
+              name: '',
+              role: null,
+              status: 'alive',
+              isHost: false,
+              lastSeen: Date.now()
+          };
+          
+          // Статистика пользователя
+          let userStats = {
+              gamesPlayed: 0,
+              gamesWon: 0,
+              mafiaWins: 0,
+              civilianWins: 0
+          };
+          
+          // Роли
+          const roles = ['mafia', 'sheriff', 'civilian', 'civilian', 'civilian'];
+          
+          // Описания ролей
+          const roleDescriptions = {
+              mafia: "Вы - мафия! Ночью устраняйте игроков. Днём не попадитесь. Цель - остаться в большинстве.",
+              sheriff: "Вы - шериф! Ночью проверяйте игроков. Днём помогайте мирным найти мафию.",
+              civilian: "Вы - мирный житель! Ночью спите. Днём обсуждайте и голосуйте, чтобы найти мафию."
+          };
+          
+          // DOM элементы
+          const authScreen = document.getElementById('authScreen');
+          const profileScreen = document.getElementById('profileScreen');
+          const joinScreen = document.getElementById('joinScreen');
+          const lobbyScreen = document.getElementById('lobbyScreen');
+          const gameScreen = document.getElementById('gameScreen');
+          const resultScreen = document.getElementById('resultScreen');
+          const emailInput = document.getElementById('emailInput');
+          const passwordInput = document.getElementById('passwordInput');
+          const loginBtn = document.getElementById('loginBtn');
+          const signupBtn = document.getElementById('signupBtn');
+          const guestBtn = document.getElementById('guestBtn');
+          const userInfo = document.getElementById('userInfo');
+          const userAvatar = document.getElementById('userAvatar');
+          const userName = document.getElementById('userName');
+          const logoutBtn = document.getElementById('logoutBtn');
+          const profileAvatar = document.getElementById('profileAvatar');
+          const profileName = document.getElementById('profileName');
+          const profileEmail = document.getElementById('profileEmail');
+          const gamesPlayed = document.getElementById('gamesPlayed');
+          const gamesWon = document.getElementById('gamesWon');
+          const mafiaWins = document.getElementById('mafiaWins');
+          const civilianWins = document.getElementById('civilianWins');
+          const playBtn = document.getElementById('playBtn');
+          const roomIdInput = document.getElementById('roomIdInput');
+          const joinRoomBtn = document.getElementById('joinRoomBtn');
+          const createRoomBtn = document.getElementById('createRoomBtn');
+          const startBtn = document.getElementById('startBtn');
+          const playerList = document.getElementById('playerList');
+          const playerCount = document.getElementById('playerCount');
+          const gamePlayerCount = document.getElementById('gamePlayerCount');
+          const dayCount = document.getElementById('dayCount');
+          const phaseDisplay = document.getElementById('phaseDisplay');
+          const playerRole = document.getElementById('playerRole');
+          const roleInfo = document.getElementById('roleInfo');
+          const playerStatus = document.getElementById('playerStatus');
+          const actionDescription = document.getElementById('actionDescription');
+          const actionButtons = document.getElementById('actionButtons');
+          const gameLog = document.getElementById('gameLog');
+          const resultPlayerList = document.getElementById('resultPlayerList');
+          const winnerTitle = document.getElementById('winnerTitle');
+          const restartBtn = document.getElementById('restartBtn');
+          const roomIdElement = document.getElementById('roomId');
+          const copyBtn = document.getElementById('copyBtn');
+          const backBtn = document.getElementById('backBtn');
+          const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+          const backToMainBtn = document.getElementById('backToMainBtn');
+          const backToProfileBtn = document.getElementById('backToProfileBtn');
+          const lobbyStatus = document.getElementById('lobbyStatus');
+          const firebaseStatus = document.getElementById('firebaseStatus');
+          const roomsList = document.getElementById('roomsList');
+          const phaseTimer = document.getElementById('phaseTimer');
+          
+          // Элементы чата
+          const chatContainer = document.getElementById('chatContainer');
+          const chatMessages = document.getElementById('chatMessages');
+          const chatInput = document.getElementById('chatInput');
+          const chatSendBtn = document.getElementById('chatSendBtn');
+          const chatToggleBtn = document.getElementById('chatToggleBtn');
+          const closeChatBtn = document.getElementById('closeChatBtn');
+          const unreadBadge = document.getElementById('unreadBadge');
+          const chatPopupContainer = document.getElementById('chatPopupContainer');
+          
+          // Элементы списка комнат
+          const roomsToggleBtn = document.getElementById('roomsToggleBtn');
+          const roomsModal = document.getElementById('roomsModal');
+          const closeRoomsModalBtn = document.getElementById('closeRoomsModalBtn');
+          
+          // Перевод ролей
+          const roleTranslations = {
+              'mafia': 'Мафия',
+              'sheriff': 'Шериф',
+              'civilian': 'Мирный'
+          };
+          
+          // Состояние чата
+          let unreadMessages = 0;
+          let lastSeenMessageTime = 0;
+          let currentUser = null;
+          let timerInterval = null;
+          
+          // Инициализация игры
+          function initGame() {
+              // Обработчики событий аутентификации
+              loginBtn.addEventListener('click', loginUser);
+              signupBtn.addEventListener('click', signupUser);
+              guestBtn.addEventListener('click', playAsGuest);
+              logoutBtn.addEventListener('click', logoutUser);
+              playBtn.addEventListener('click', goToJoinScreen);
+              backToMainBtn.addEventListener('click', goToAuthScreen);
+              backToProfileBtn.addEventListener('click', goToProfileScreen);
+              
+              // Обработчики игровых событий
+              joinRoomBtn.addEventListener('click', joinRoom);
+              createRoomBtn.addEventListener('click', createRoom);
+              startBtn.addEventListener('click', startGame);
+              restartBtn.addEventListener('click', restartGame);
+              copyBtn.addEventListener('click', copyRoomId);
+              backBtn.addEventListener('click', goBackToJoinScreen);
+              backToLobbyBtn.addEventListener('click', goBackToLobby);
+              
+              // Обработчики чата
+              chatSendBtn.addEventListener('click', sendChatMessage);
+              chatInput.addEventListener('keypress', (e) => {
+                  if (e.key === 'Enter') sendChatMessage();
+              });
+              
+              chatToggleBtn.addEventListener('click', toggleChat);
+              closeChatBtn.addEventListener('click', closeChat);
+              
+              // Обработчики списка комнат
+              roomsToggleBtn.addEventListener('click', openRoomsModal);
+              closeRoomsModalBtn.addEventListener('click', closeRoomsModal);
+              
+              // Клик вне модального окна для закрытия
+              roomsModal.addEventListener('click', (e) => {
+                  if (e.target === roomsModal) closeRoomsModal();
+              });
+              
+              // Авто-заполнение для демонстрации
+              roomIdInput.value = '';
+              emailInput.value = 'test@example.com';
+              passwordInput.value = 'password';
+              
+              // Проверка статуса Firebase
+              checkFirebaseConnection();
+              
+              // Проверка состояния аутентификации
+              auth.onAuthStateChanged(user => {
+                  if (user) {
+                      currentUser = user;
+                      showProfileScreen();
+                      loadUserStats();
+                  } else {
+                      authScreen.classList.add('active');
+                      profileScreen.classList.remove('active');
+                      userInfo.style.display = 'none';
+                  }
+              });
+          }
+          
+          // Запуск игры при загрузке
+          window.onload = initGame;
+      </script>
+  </body>
 </html>
