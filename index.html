@@ -963,6 +963,152 @@
             width: 100%;
         }
         
+        /* VIP стили */
+        .vip-user {
+            position: relative;
+            border: 2px solid gold;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .vip-badge {
+            color: gold;
+            margin-left: 5px;
+            font-size: 0.8em;
+        }
+        
+        .vip-status {
+            background: linear-gradient(to right, #3a2a00, #5a4a20);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            border: 1px solid gold;
+        }
+        
+        .donate-menu {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        #donateBtn {
+            background: linear-gradient(to right, #ffd700, #ffcc00);
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .donate-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .donate-modal .modal-content {
+            background: rgba(30, 30, 40, 0.95);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .donate-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .donate-option {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #444;
+        }
+        
+        .donate-option.selected {
+            border-color: gold;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .donate-amount {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: gold;
+        }
+        
+        .donate-days {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .payment-methods {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .payment-method {
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #444;
+        }
+        
+        .payment-method.active {
+            border-color: gold;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        /* VIP роли в игре */
+        .player-card.vip {
+            border: 1px solid gold;
+            background: linear-gradient(to bottom right, rgba(30, 30, 0, 0.3), rgba(60, 60, 0, 0.5));
+        }
+        
+        .player-card.vip .player-name {
+            color: gold;
+        }
+        
+        .vip-benefits {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid gold;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .vip-benefits h4 {
+            color: gold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .vip-benefits ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .vip-benefits li {
+            padding: 5px 0;
+            color: #ffcc00;
+        }
+        
+        .vip-benefits li:before {
+            content: "👑 ";
+            margin-right: 5px;
+        }
+        
         /* Горизонтальная ориентация */
         @media (min-width: 768px) {
             .container {
