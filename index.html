@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Онлайн Мафия | Улучшенный чат</title>
+    <title>Онлайн Мафия | VIP-режим и донаты</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -538,6 +538,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+        
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 768px) {
+            .donate-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
+            }
         }
         
         /* Адаптация для очень маленьких экранов */
@@ -1109,6 +1120,163 @@
             margin-right: 5px;
         }
         
+        /* VIP стили */
+        .vip-user {
+            position: relative;
+            border: 2px solid gold;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .vip-badge {
+            color: gold;
+            margin-left: 5px;
+            font-size: 0.8em;
+        }
+        
+        .vip-status {
+            background: linear-gradient(to right, #3a2a00, #5a4a20);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            border: 1px solid gold;
+        }
+        
+        .donate-menu {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        #donateBtn {
+            background: linear-gradient(to right, #ffd700, #ffcc00);
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .donate-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .donate-modal .modal-content {
+            background: rgba(30, 30, 40, 0.95);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .donate-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .donate-option {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #444;
+        }
+        
+        .donate-option.selected {
+            border-color: gold;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .donate-amount {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: gold;
+        }
+        
+        .donate-days {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .payment-methods {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .payment-method {
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #444;
+        }
+        
+        .payment-method.active {
+            border-color: gold;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        /* VIP роли в игре */
+        .player-card.vip {
+            border: 1px solid gold;
+            background: linear-gradient(to bottom right, rgba(30, 30, 0, 0.3), rgba(60, 60, 0, 0.5));
+        }
+        
+        .player-card.vip .player-name {
+            color: gold;
+        }
+        
+        .vip-benefits {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid gold;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .vip-benefits h4 {
+            color: gold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .vip-benefits ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .vip-benefits li {
+            padding: 5px 0;
+            color: #ffcc00;
+        }
+        
+        .vip-benefits li:before {
+            content: "👑 ";
+            margin-right: 5px;
+        }
+        
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 768px) {
+            .donate-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
+            }
+        }
+        
         /* Горизонтальная ориентация */
         @media (min-width: 768px) {
             .container {
@@ -1145,19 +1313,30 @@
               <i class="fas fa-door-open rooms-icon"></i>
           </div>
           
-          <header>
-              <div class="header-content">
-                  <h1><i class="fas fa-user-secret"></i> МАФИЯ ДЛЯ СМАРТФОНА</h1>
-                  <div class="subtitle">Играйте с друзьями и общайтесь в чате</div>
-              </div>
-              <div class="user-info" id="userInfo" style="display: none;">
-                  <div class="user-avatar" id="userAvatar">?</div>
-                  <div class="user-name" id="userName">Гость</div>
-                  <button class="logout-btn" id="logoutBtn" title="Выйти">
-                      <i class="fas fa-sign-out-alt"></i>
-                  </button>
-              </div>
-          </header>
+                  <header>
+            <div class="header-content">
+                <h1><i class="fas fa-user-secret"></i> МАФИЯ VIP</h1>
+                <div class="subtitle">Играйте с друзьями и получайте преимущества</div>
+            </div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <div class="user-avatar" id="userAvatar">?</div>
+                <div class="user-name" id="userName">Гость</div>
+                <button class="logout-btn" id="logoutBtn" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </header>
+        
+        <!-- VIP статус -->
+        <div class="vip-status" id="vipStatus" style="display: none;">
+            <i class="fas fa-crown"></i> VIP до: <span id="vipExpireDate">Не активен</span>
+            <button id="buyVipBtn">Продлить VIP</button>
+        </div>
+        
+        <!-- Меню доната -->
+        <div class="donate-menu">
+            <button id="donateBtn"><i class="fas fa-gem"></i> Поддержать проект</button>
+        </div>
           
           <!-- Экран аутентификации -->
           <div id="authScreen" class="game-screen active">
@@ -1207,10 +1386,21 @@
                       </div>
                   </div>
                   
-                  <div class="profile-actions">
-                      <button id="playBtn">Играть</button>
-                      <button id="historyBtn">История игр</button>
-                  </div>
+                                  <div class="vip-benefits">
+                    <h4><i class="fas fa-crown"></i> VIP Преимущества</h4>
+                    <ul>
+                        <li>Приоритет в очереди комнат</li>
+                        <li>Эксклюзивные роли в игре</li>
+                        <li>Золотая аватарка в чате</li>
+                        <li>Дополнительная статистика</li>
+                        <li>Поддержка проекта</li>
+                    </ul>
+                </div>
+                
+                <div class="profile-actions">
+                    <button id="playBtn">Играть</button>
+                    <button id="historyBtn">История игр</button>
+                </div>
               </div>
           </div>
           
@@ -1361,9 +1551,61 @@
               </div>
           </div>
           
-          <!-- Контейнер для popup сообщений -->
-          <div class="chat-popup-container" id="chatPopupContainer"></div>
-      </div>
+                  <!-- Контейнер для popup сообщений -->
+        <div class="chat-popup-container" id="chatPopupContainer"></div>
+        
+        <!-- Модальное окно доната -->
+        <div class="donate-modal" id="donateModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-gem"></i> Поддержать проект</h3>
+                    <button class="close-modal-btn" id="closeDonateModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="text-align: center; margin-bottom: 15px;">Поддержите развитие игры и получите VIP-статус!</p>
+                    
+                    <div class="donate-options">
+                        <div class="donate-option" data-amount="100" data-days="7">
+                            <div class="donate-amount">100₽</div>
+                            <div class="donate-days">7 дней VIP</div>
+                        </div>
+                        <div class="donate-option" data-amount="300" data-days="30">
+                            <div class="donate-amount">300₽</div>
+                            <div class="donate-days">30 дней VIP</div>
+                        </div>
+                        <div class="donate-option" data-amount="800" data-days="90">
+                            <div class="donate-amount">800₽</div>
+                            <div class="donate-days">90 дней VIP</div>
+                        </div>
+                        <div class="donate-option" data-amount="1500" data-days="365">
+                            <div class="donate-amount">1500₽</div>
+                            <div class="donate-days">1 год VIP</div>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-methods">
+                        <div class="payment-method active" data-method="card">
+                            <i class="fas fa-credit-card"></i> Карта
+                        </div>
+                        <div class="payment-method" data-method="qiwi">
+                            <i class="fas fa-wallet"></i> QIWI
+                        </div>
+                        <div class="payment-method" data-method="yoomoney">
+                            <i class="fas fa-money-bill"></i> ЮMoney
+                        </div>
+                    </div>
+                    
+                    <button id="payBtn" style="width: 100%; margin-top: 15px;" disabled>
+                        Оплатить
+                    </button>
+                    
+                    <p style="font-size: 0.8rem; opacity: 0.7; text-align: center; margin-top: 10px;">
+                        * VIP активируется автоматически после оплаты
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 
       <script>
           // Конфиг Firebase
@@ -1411,13 +1653,27 @@
               lastSeen: Date.now()
           };
           
-          // Статистика пользователя
-          let userStats = {
-              gamesPlayed: 0,
-              gamesWon: 0,
-              mafiaWins: 0,
-              civilianWins: 0
-          };
+                  // Статистика пользователя
+        let userStats = {
+            gamesPlayed: 0,
+            gamesWon: 0,
+            mafiaWins: 0,
+            civilianWins: 0
+        };
+        
+        // VIP статус пользователя
+        let userVip = {
+            isActive: false,
+            expireDate: null,
+            activatedAt: null
+        };
+        
+        // Состояние доната
+        let donateState = {
+            selectedAmount: null,
+            selectedDays: null,
+            selectedMethod: 'card'
+        };
           
           // Роли
           const roles = ['mafia', 'sheriff', 'civilian', 'civilian', 'civilian'];
@@ -1492,10 +1748,19 @@
           const unreadBadge = document.getElementById('unreadBadge');
           const chatPopupContainer = document.getElementById('chatPopupContainer');
           
-          // Элементы списка комнат
-          const roomsToggleBtn = document.getElementById('roomsToggleBtn');
-          const roomsModal = document.getElementById('roomsModal');
-          const closeRoomsModalBtn = document.getElementById('closeRoomsModalBtn');
+                  // Элементы списка комнат
+        const roomsToggleBtn = document.getElementById('roomsToggleBtn');
+        const roomsModal = document.getElementById('roomsModal');
+        const closeRoomsModalBtn = document.getElementById('closeRoomsModalBtn');
+        
+        // Элементы VIP и донатов
+        const vipStatus = document.getElementById('vipStatus');
+        const vipExpireDate = document.getElementById('vipExpireDate');
+        const buyVipBtn = document.getElementById('buyVipBtn');
+        const donateBtn = document.getElementById('donateBtn');
+        const donateModal = document.getElementById('donateModal');
+        const closeDonateModalBtn = document.getElementById('closeDonateModalBtn');
+        const payBtn = document.getElementById('payBtn');
           
           // Перевод ролей
           const roleTranslations = {
@@ -1539,35 +1804,308 @@
               chatToggleBtn.addEventListener('click', toggleChat);
               closeChatBtn.addEventListener('click', closeChat);
               
-              // Обработчики списка комнат
-              roomsToggleBtn.addEventListener('click', openRoomsModal);
-              closeRoomsModalBtn.addEventListener('click', closeRoomsModal);
-              
-              // Клик вне модального окна для закрытия
-              roomsModal.addEventListener('click', (e) => {
-                  if (e.target === roomsModal) closeRoomsModal();
-              });
+                          // Обработчики списка комнат
+            roomsToggleBtn.addEventListener('click', openRoomsModal);
+            closeRoomsModalBtn.addEventListener('click', closeRoomsModal);
+            
+            // Клик вне модального окна для закрытия
+            roomsModal.addEventListener('click', (e) => {
+                if (e.target === roomsModal) closeRoomsModal();
+            });
+            
+            // Обработчики VIP и донатов
+            donateBtn.addEventListener('click', openDonateModal);
+            buyVipBtn.addEventListener('click', openDonateModal);
+            closeDonateModalBtn.addEventListener('click', closeDonateModal);
+            payBtn.addEventListener('click', processDonation);
+            
+            // Клик вне модального окна доната для закрытия
+            donateModal.addEventListener('click', (e) => {
+                if (e.target === donateModal) closeDonateModal();
+            });
+            
+            // Обработчики выбора суммы доната
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('donate-option')) {
+                    selectDonateOption(e.target);
+                }
+                if (e.target.classList.contains('payment-method')) {
+                    selectPaymentMethod(e.target);
+                }
+            });
               
               // Авто-заполнение для демонстрации
               roomIdInput.value = '';
               emailInput.value = 'test@example.com';
               passwordInput.value = 'password';
               
-              // Проверка статуса Firebase
-              checkFirebaseConnection();
+                          // Проверка статуса Firebase
+            checkFirebaseConnection();
+            
+            // Инициализация VIP статуса
+            updateVipDisplay();
+            
+            // Проверка состояния аутентификации
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    showProfileScreen();
+                    loadUserStats();
+                    loadVipStatus();
+                } else {
+                    authScreen.classList.add('active');
+                    profileScreen.classList.remove('active');
+                    userInfo.style.display = 'none';
+                }
+            });
+          }
+          
+          // ============== VIP ФУНКЦИИ ==============
+          
+          // Загрузка VIP статуса
+          function loadVipStatus() {
+              if (!currentUser) return;
               
-              // Проверка состояния аутентификации
-              auth.onAuthStateChanged(user => {
-                  if (user) {
-                      currentUser = user;
-                      showProfileScreen();
-                      loadUserStats();
+              const vipRef = database.ref(`vips/${currentUser.uid}`);
+              vipRef.once('value').then(snapshot => {
+                  if (snapshot.exists()) {
+                      userVip = snapshot.val();
+                      updateVipDisplay();
                   } else {
-                      authScreen.classList.add('active');
-                      profileScreen.classList.remove('active');
-                      userInfo.style.display = 'none';
+                      // Создаем новую запись VIP статуса
+                      saveVipStatus();
                   }
               });
+          }
+          
+          // Сохранение VIP статуса
+          function saveVipStatus() {
+              if (!currentUser) return;
+              
+              const vipRef = database.ref(`vips/${currentUser.uid}`);
+              vipRef.set(userVip);
+          }
+          
+          // Обновление отображения VIP
+          function updateVipDisplay() {
+              if (userVip.isActive && userVip.expireDate) {
+                  const expireDate = new Date(userVip.expireDate);
+                  const now = new Date();
+                  
+                  if (expireDate > now) {
+                      vipStatus.style.display = 'block';
+                      vipExpireDate.textContent = expireDate.toLocaleDateString('ru-RU');
+                      
+                      // Добавляем VIP класс к аватару пользователя
+                      if (userAvatar) {
+                          userAvatar.classList.add('vip-user');
+                          const existingBadge = userName.querySelector('.vip-badge');
+                          if (!existingBadge) {
+                              userName.innerHTML += '<span class="vip-badge"><i class="fas fa-crown"></i></span>';
+                          }
+                      }
+                  } else {
+                      // VIP истёк
+                      userVip.isActive = false;
+                      userVip.expireDate = null;
+                      saveVipStatus();
+                      updateVipDisplay();
+                  }
+              } else {
+                  vipStatus.style.display = 'none';
+                  if (userAvatar) {
+                      userAvatar.classList.remove('vip-user');
+                      // Удаляем VIP badge если есть
+                      const badge = userName.querySelector('.vip-badge');
+                      if (badge) badge.remove();
+                  }
+              }
+          }
+          
+          // Проверка VIP статуса игрока
+          function isPlayerVip(playerId) {
+              if (!currentUser || currentPlayer.id !== playerId) return false;
+              return userVip.isActive && userVip.expireDate && new Date(userVip.expireDate) > new Date();
+          }
+          
+          // ============== ДОНАТ ФУНКЦИИ ==============
+          
+          // Открыть модальное окно доната
+          function openDonateModal() {
+              donateModal.style.display = 'flex';
+              resetDonateSelection();
+          }
+          
+          // Закрыть модальное окно доната
+          function closeDonateModal() {
+              donateModal.style.display = 'none';
+          }
+          
+          // Сброс выбора доната
+          function resetDonateSelection() {
+              donateState.selectedAmount = null;
+              donateState.selectedDays = null;
+              payBtn.disabled = true;
+              payBtn.textContent = 'Оплатить';
+              
+              // Убираем выделение со всех опций
+              document.querySelectorAll('.donate-option').forEach(option => {
+                  option.classList.remove('selected');
+              });
+          }
+          
+          // Выбор опции доната
+          function selectDonateOption(element) {
+              // Убираем выделение с других опций
+              document.querySelectorAll('.donate-option').forEach(option => {
+                  option.classList.remove('selected');
+              });
+              
+              // Выделяем выбранную опцию
+              element.classList.add('selected');
+              
+              // Сохраняем выбор
+              donateState.selectedAmount = parseInt(element.getAttribute('data-amount'));
+              donateState.selectedDays = parseInt(element.getAttribute('data-days'));
+              
+              // Активируем кнопку оплаты
+              payBtn.disabled = false;
+              payBtn.textContent = `Оплатить ${donateState.selectedAmount}₽`;
+          }
+          
+          // Выбор способа оплаты
+          function selectPaymentMethod(element) {
+              // Убираем активный класс с других методов
+              document.querySelectorAll('.payment-method').forEach(method => {
+                  method.classList.remove('active');
+              });
+              
+              // Активируем выбранный метод
+              element.classList.add('active');
+              
+              // Сохраняем выбор
+              donateState.selectedMethod = element.getAttribute('data-method');
+          }
+          
+          // Обработка доната
+          function processDonation() {
+              if (!donateState.selectedAmount || !donateState.selectedDays) {
+                  alert('Выберите сумму доната');
+                  return;
+              }
+              
+              // Симуляция оплаты (в реальности здесь была бы интеграция с платёжной системой)
+              const confirmPayment = confirm(`Подтвердить оплату ${donateState.selectedAmount}₽ за ${donateState.selectedDays} дней VIP?`);
+              
+              if (confirmPayment) {
+                  // Симулируем успешную оплату
+                  payBtn.textContent = 'Обработка...';
+                  payBtn.disabled = true;
+                  
+                  setTimeout(() => {
+                      activateVip(donateState.selectedDays);
+                      closeDonateModal();
+                      alert('Спасибо за поддержку! VIP статус активирован!');
+                  }, 1000);
+              }
+          }
+          
+          // Активация VIP
+          function activateVip(days) {
+              const now = new Date();
+              let expireDate;
+              
+              if (userVip.isActive && userVip.expireDate && new Date(userVip.expireDate) > now) {
+                  // Если VIP уже активен, продлеваем
+                  expireDate = new Date(userVip.expireDate);
+                  expireDate.setDate(expireDate.getDate() + days);
+              } else {
+                  // Активируем новый VIP
+                  expireDate = new Date();
+                  expireDate.setDate(expireDate.getDate() + days);
+              }
+              
+              userVip.isActive = true;
+              userVip.expireDate = expireDate.getTime();
+              userVip.activatedAt = now.getTime();
+              
+              saveVipStatus();
+              updateVipDisplay();
+          }
+          
+          // Обновление отображения игроков с VIP статусом
+          function updatePlayerDisplay(player, playerCard) {
+              if (isPlayerVip(player.id)) {
+                  playerCard.classList.add('vip');
+                  const playerName = playerCard.querySelector('.player-name');
+                  if (playerName && !playerName.querySelector('.vip-badge')) {
+                      playerName.innerHTML += '<span class="vip-badge"><i class="fas fa-crown"></i></span>';
+                  }
+              }
+          }
+          
+          // ============== НЕДОСТАЮЩИЕ ФУНКЦИИ ==============
+          
+          // Функции-заглушки для базового функционала
+          function openRoomsModal() {
+              alert('Список комнат (функция в разработке)');
+          }
+          
+          function closeRoomsModal() {
+              // Функция для закрытия модального окна комнат
+          }
+          
+          function loadRoomsList() {
+              // Функция для загрузки списка комнат
+          }
+          
+          function sendChatMessage() {
+              alert('Чат (функция в разработке)');
+          }
+          
+          function renderChatMessages() {
+              // Функция для отображения сообщений чата
+          }
+          
+          function toggleChat() {
+              alert('Переключение чата (функция в разработке)');
+          }
+          
+          function closeChat() {
+              // Функция для закрытия чата
+          }
+          
+          function copyRoomId() {
+              alert('ID комнаты скопирован!');
+          }
+          
+          function createRoom() {
+              alert('Создание комнаты (функция в разработке)');
+          }
+          
+          function joinRoom() {
+              alert('Присоединение к комнате (функция в разработке)');
+          }
+          
+          function startGame() {
+              alert('Начало игры (функция в разработке)');
+          }
+          
+          function restartGame() {
+              alert('Перезапуск игры (функция в разработке)');
+          }
+          
+          function goBackToJoinScreen() {
+              // Функция возврата к экрану выбора комнаты
+          }
+          
+          function goBackToLobby() {
+              // Функция возврата в лобби
+          }
+          
+          function checkFirebaseConnection() {
+              // Функция проверки соединения с Firebase
+              firebaseStatus.innerHTML = '<i class="fas fa-database"></i> Firebase Demo Mode';
           }
           
           // Запуск игры при загрузке
