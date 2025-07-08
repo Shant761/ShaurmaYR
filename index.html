@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Онлайн Мафия | Улучшенный чат</title>
+    <title>Онлайн Мафия | Голосовой чат</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Обновлённые стили с улучшенным UI */
@@ -1012,6 +1013,89 @@
                 top: 140px;
             }
         }
+        
+        /* Стили для голосовых сообщений */
+        .voice-message-btn {
+            padding: 10px;
+            background: #444;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .voice-message-btn:hover {
+            background: #555;
+        }
+        
+        .voice-message-btn.recording {
+            background: #b21f1f;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(178, 31, 31, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(178, 31, 31, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(178, 31, 31, 0); }
+        }
+        
+        .audio-message {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+            width: 100%;
+        }
+        
+        .audio-message audio {
+            flex: 1;
+            max-width: 100%;
+            height: 32px;
+            outline: none;
+        }
+        
+        .audio-message .delete-btn {
+            background: #b21f1f;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+        
+        .audio-message .delete-btn i {
+            font-size: 0.7rem;
+        }
+        
+        .voice-recorder-indicator {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background: rgba(178, 31, 31, 0.8);
+            padding: 8px;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .voice-recorder-indicator.visible {
+            display: block;
+        }
+        
+        .audio-duration {
+            margin-left: 8px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -1123,7 +1207,7 @@
                         <li>Игра распределяет роли: Мафия, Шериф, Мирные</li>
                         <li>Ночью мафия убивает, шериф проверяет</li>
                         <li>Днём обсуждайте и голосуйте за подозреваемого</li>
-                        <li>Общайтесь с игроками в чате</li>
+                        <li>Общайтесь с игроками в чате (текст и голос)</li>
                     </ul>
                 </div>
             </div>
@@ -1224,7 +1308,14 @@
             </div>
             <div class="chat-input-container">
                 <input type="text" class="chat-input" id="chatInput" placeholder="Напишите сообщение...">
+                <button class="voice-message-btn" id="voiceMessageBtn" title="Записать голосовое сообщение">
+                    <i class="fas fa-microphone"></i>
+                </button>
                 <button class="chat-send-btn" id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div class="voice-recorder-indicator" id="voiceRecorderIndicator">
+                <i class="fas fa-microphone"></i> Идет запись... Говорите!
+                <span class="audio-duration" id="audioDuration">00:00</span>
             </div>
         </div>
         
@@ -1253,7 +1344,7 @@
 
     <script>
         // Конфиг Firebase
-       const firebaseConfig = {
+         const firebaseConfig = {
   apiKey: "AIzaSyDrOAhG2hQphTC8xmI_L1HD835Z101GPAI",
   authDomain: "grean-mafia.firebaseapp.com",
   databaseURL: "https://grean-mafia-default-rtdb.europe-west1.firebasedatabase.app",
@@ -1261,12 +1352,13 @@
   storageBucket: "grean-mafia.firebasestorage.app",
   messagingSenderId: "603308315781",
   appId: "1:603308315781:web:053d9551ed6516477905ec"
-}; 
+};
         
         // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const auth = firebase.auth();
+        const storage = firebase.storage();
         
         // Состояние игры
         let gameState = {
@@ -1377,6 +1469,9 @@
         const closeChatBtn = document.getElementById('closeChatBtn');
         const unreadBadge = document.getElementById('unreadBadge');
         const chatPopupContainer = document.getElementById('chatPopupContainer');
+        const voiceMessageBtn = document.getElementById('voiceMessageBtn');
+        const voiceRecorderIndicator = document.getElementById('voiceRecorderIndicator');
+        const audioDuration = document.getElementById('audioDuration');
         
         // Элементы списка комнат
         const roomsToggleBtn = document.getElementById('roomsToggleBtn');
@@ -1395,6 +1490,13 @@
         let lastSeenMessageTime = 0;
         let currentUser = null;
         let timerInterval = null;
+        
+        // Переменные для записи голоса
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let audioBlob = null;
+        let recordingTimer = null;
+        let recordingStartTime = 0;
         
         // Инициализация игры
         function initGame() {
@@ -1434,6 +1536,12 @@
                 if (e.target === roomsModal) closeRoomsModal();
             });
             
+            // Обработчики голосовых сообщений
+            voiceMessageBtn.addEventListener('mousedown', startRecording);
+            voiceMessageBtn.addEventListener('mouseup', stopRecording);
+            voiceMessageBtn.addEventListener('touchstart', startRecording, {passive: true});
+            voiceMessageBtn.addEventListener('touchend', stopRecording);
+            
             // Авто-заполнение для демонстрации
             roomIdInput.value = '';
             emailInput.value = 'test@example.com';
@@ -1454,6 +1562,129 @@
                     userInfo.style.display = 'none';
                 }
             });
+        }
+        
+        // Начать запись голоса
+        function startRecording(e) {
+            e.preventDefault();
+            
+            // Проверяем поддержку записи голоса
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Ваш браузер не поддерживает запись голоса');
+                return;
+            }
+            
+            // Запрашиваем доступ к микрофону
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // Создаем медиа-рекордер
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    // Обработчики событий записи
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        // Создаем Blob из записанных данных
+                        audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        
+                        // Останавливаем поток
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        // Отправляем аудио-сообщение
+                        sendVoiceMessage(audioBlob);
+                        
+                        // Сбрасываем состояние
+                        audioChunks = [];
+                        audioBlob = null;
+                    };
+                    
+                    // Начинаем запись
+                    mediaRecorder.start();
+                    voiceMessageBtn.classList.add('recording');
+                    voiceRecorderIndicator.classList.add('visible');
+                    
+                    // Запускаем таймер длительности записи
+                    recordingStartTime = Date.now();
+                    updateRecordingTimer();
+                })
+                .catch(error => {
+                    console.error('Ошибка доступа к микрофону:', error);
+                    alert('Не удалось получить доступ к микрофону. Пожалуйста, проверьте разрешения.');
+                });
+        }
+        
+        // Обновление таймера записи
+        function updateRecordingTimer() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+            
+            const elapsed = Date.now() - recordingStartTime;
+            const seconds = Math.floor(elapsed / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const displaySeconds = seconds % 60;
+            
+            audioDuration.textContent = `${minutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
+            
+            // Ограничиваем запись 30 секундами
+            if (seconds >= 30) {
+                stopRecording();
+                return;
+            }
+            
+            recordingTimer = setTimeout(updateRecordingTimer, 1000);
+        }
+        
+        // Остановить запись
+        function stopRecording() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+            
+            mediaRecorder.stop();
+            voiceMessageBtn.classList.remove('recording');
+            voiceRecorderIndicator.classList.remove('visible');
+            
+            // Останавливаем таймер
+            if (recordingTimer) {
+                clearTimeout(recordingTimer);
+                recordingTimer = null;
+            }
+        }
+        
+        // Отправить голосовое сообщение
+        function sendVoiceMessage(audioBlob) {
+            if (!currentPlayer.id || !gameState.roomId) return;
+            
+            // Создаем уникальное имя файла
+            const fileName = `voice_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.webm`;
+            const storageRef = storage.ref(`audio_messages/${gameState.roomId}/${fileName}`);
+            
+            // Загружаем файл в Firebase Storage
+            storageRef.put(audioBlob)
+                .then(snapshot => {
+                    // Получаем URL для скачивания
+                    return snapshot.ref.getDownloadURL();
+                })
+                .then(downloadURL => {
+                    // Создаем сообщение
+                    const senderName = currentPlayer.name;
+                    const newMessage = {
+                        senderId: currentPlayer.id,
+                        senderName: senderName,
+                        audioUrl: downloadURL,
+                        timestamp: Date.now(),
+                        isAudio: true,
+                        duration: Math.floor((Date.now() - recordingStartTime) / 1000)
+                    };
+                    
+                    // Добавляем сообщение в состояние игры
+                    gameState.chatMessages.push(newMessage);
+                    saveGameState();
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки аудио:', error);
+                    alert('Не удалось отправить голосовое сообщение');
+                });
         }
         
         // Открыть модальное окно списка комнат
@@ -1740,8 +1971,29 @@
                     // Системное сообщение
                     messageDiv.className = 'system-message';
                     messageDiv.textContent = msg.text;
+                } else if (msg.isAudio) {
+                    // Аудио-сообщение
+                    const isCurrentUser = msg.senderId === currentPlayer.id;
+                    messageDiv.className = `message ${isCurrentUser ? 'message-outgoing' : 'message-incoming'}`;
+                    
+                    const time = new Date(msg.timestamp);
+                    const timeString = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+                    
+                    // Форматируем длительность
+                    const minutes = Math.floor(msg.duration / 60);
+                    const seconds = msg.duration % 60;
+                    const durationString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    messageDiv.innerHTML = `
+                        <div class="message-sender">${msg.senderName}</div>
+                        <div class="audio-message">
+                            <audio controls src="${msg.audioUrl}"></audio>
+                            <span class="audio-duration">${durationString}</span>
+                        </div>
+                        <div class="message-time">${timeString}</div>
+                    `;
                 } else {
-                    // Сообщение от игрока
+                    // Текстовое сообщение
                     const isCurrentUser = msg.senderId === currentPlayer.id;
                     messageDiv.className = `message ${isCurrentUser ? 'message-outgoing' : 'message-incoming'}`;
                     
@@ -1795,10 +2047,20 @@
             recentMessages.forEach(msg => {
                 const popup = document.createElement('div');
                 popup.className = 'chat-popup';
-                popup.innerHTML = `
-                    <div class="chat-popup-sender">${msg.senderName}</div>
-                    <div class="chat-popup-content">${msg.text}</div>
-                `;
+                
+                if (msg.isAudio) {
+                    popup.innerHTML = `
+                        <div class="chat-popup-sender">${msg.senderName}</div>
+                        <div class="chat-popup-content">
+                            <i class="fas fa-microphone"></i> Голосовое сообщение
+                        </div>
+                    `;
+                } else {
+                    popup.innerHTML = `
+                        <div class="chat-popup-sender">${msg.senderName}</div>
+                        <div class="chat-popup-content">${msg.text}</div>
+                    `;
+                }
                 
                 chatPopupContainer.appendChild(popup);
                 
