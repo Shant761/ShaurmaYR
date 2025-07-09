@@ -7,10 +7,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Обновлённые стили с улучшенным UI */
         * {
             margin: 0;
             padding: 0;
@@ -961,6 +960,77 @@
             font-size: 0.9rem;
         }
         
+        /* Стили для голосовых сообщений */
+        .voice-message-btn {
+            padding: 10px;
+            background: #444;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .voice-message-btn.recording {
+            background: #b21f1f;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(178, 31, 31, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(178, 31, 31, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(178, 31, 31, 0); }
+        }
+        
+        .audio-message {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 5px;
+            width: 100%;
+        }
+        
+        .audio-message audio {
+            width: 100%;
+            max-width: 250px;
+            height: 40px;
+            outline: none;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+        }
+        
+        .audio-duration {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+        
+        .voice-recorder-indicator {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background: rgba(178, 31, 31, 0.8);
+            padding: 8px;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .voice-recorder-indicator.visible {
+            display: block;
+        }
+        
+        .audio-duration-indicator {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-left: 8px;
+        }
+        
         /* Адаптация для очень маленьких экранов */
         @media (max-width: 360px) {
             h1 {
@@ -1013,89 +1083,6 @@
                 top: 140px;
             }
         }
-        
-        /* Стили для голосовых сообщений */
-        .voice-message-btn {
-            padding: 10px;
-            background: #444;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-        }
-        
-        .voice-message-btn:hover {
-            background: #555;
-        }
-        
-        .voice-message-btn.recording {
-            background: #b21f1f;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(178, 31, 31, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(178, 31, 31, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(178, 31, 31, 0); }
-        }
-        
-        .audio-message {
-            display: flex;
-            align-items: center;
-            margin-top: 5px;
-            width: 100%;
-        }
-        
-        .audio-message audio {
-            flex: 1;
-            max-width: 100%;
-            height: 32px;
-            outline: none;
-        }
-        
-        .audio-message .delete-btn {
-            background: #b21f1f;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 8px;
-            cursor: pointer;
-        }
-        
-        .audio-message .delete-btn i {
-            font-size: 0.7rem;
-        }
-        
-        .voice-recorder-indicator {
-            position: absolute;
-            bottom: 60px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            background: rgba(178, 31, 31, 0.8);
-            padding: 8px;
-            font-weight: bold;
-            display: none;
-        }
-        
-        .voice-recorder-indicator.visible {
-            display: block;
-        }
-        
-        .audio-duration {
-            margin-left: 8px;
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
     </style>
 </head>
 <body>
@@ -1118,7 +1105,7 @@
         <header>
             <div class="header-content">
                 <h1><i class="fas fa-user-secret"></i> МАФИЯ ДЛЯ СМАРТФОНА</h1>
-                <div class="subtitle">Играйте с друзьями и общайтесь в чате</div>
+                <div class="subtitle">Играйте с друзьями и общайтесь в голосовом чате</div>
             </div>
             <div class="user-info" id="userInfo" style="display: none;">
                 <div class="user-avatar" id="userAvatar">?</div>
@@ -1134,8 +1121,8 @@
             <div class="auth-container">
                 <h2>Вход / Регистрация</h2>
                 <div class="input-group">
-                    <input type="text" id="emailInput" placeholder="Email">
-                    <input type="password" id="passwordInput" placeholder="Пароль">
+                    <input type="text" id="emailInput" placeholder="Email" value="test@example.com">
+                    <input type="password" id="passwordInput" placeholder="Пароль" value="password">
                     <div style="display: flex; gap: 10px;">
                         <button id="loginBtn" style="flex: 1;">Войти</button>
                         <button id="signupBtn" style="flex: 1;">Зарегистрироваться</button>
@@ -1207,7 +1194,7 @@
                         <li>Игра распределяет роли: Мафия, Шериф, Мирные</li>
                         <li>Ночью мафия убивает, шериф проверяет</li>
                         <li>Днём обсуждайте и голосуйте за подозреваемого</li>
-                        <li>Общайтесь с игроками в чате (текст и голос)</li>
+                        <li>Общайтесь с игроками в голосовом чате</li>
                     </ul>
                 </div>
             </div>
@@ -1315,7 +1302,7 @@
             </div>
             <div class="voice-recorder-indicator" id="voiceRecorderIndicator">
                 <i class="fas fa-microphone"></i> Идет запись... Говорите!
-                <span class="audio-duration" id="audioDuration">00:00</span>
+                <span class="audio-duration-indicator" id="audioDuration">00:00</span>
             </div>
         </div>
         
@@ -1343,22 +1330,21 @@
     </div>
 
     <script>
-        // Конфиг Firebase
-         const firebaseConfig = {
-  apiKey: "AIzaSyDrOAhG2hQphTC8xmI_L1HD835Z101GPAI",
-  authDomain: "grean-mafia.firebaseapp.com",
-  databaseURL: "https://grean-mafia-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "grean-mafia",
-  storageBucket: "grean-mafia.firebasestorage.app",
-  messagingSenderId: "603308315781",
-  appId: "1:603308315781:web:053d9551ed6516477905ec"
-};
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrOAhG2hQphTC8xmI_L1HD835Z101GPAI",
+            authDomain: "grean-mafia.firebaseapp.com",
+            databaseURL: "https://grean-mafia-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "grean-mafia",
+            storageBucket: "grean-mafia.firebasestorage.app",
+            messagingSenderId: "603308315781",
+            appId: "1:603308315781:web:053d9551ed6516477905ec"
+        };
         
         // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const auth = firebase.auth();
-        const storage = firebase.storage();
         
         // Состояние игры
         let gameState = {
@@ -1376,7 +1362,7 @@
             chatMessages: [],
             status: 'waiting',
             phaseEndTime: 0,
-            phaseDuration: 120000 // 2 минуты по умолчанию
+            phaseDuration: 120000
         };
         
         // Текущий игрок
@@ -1492,11 +1478,10 @@
         let timerInterval = null;
         
         // Переменные для записи голоса
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let audioBlob = null;
+        let recorder = null;
         let recordingTimer = null;
         let recordingStartTime = 0;
+        let recordedAudio = null;
         
         // Инициализация игры
         function initGame() {
@@ -1544,8 +1529,6 @@
             
             // Авто-заполнение для демонстрации
             roomIdInput.value = '';
-            emailInput.value = 'test@example.com';
-            passwordInput.value = 'password';
             
             // Проверка статуса Firebase
             checkFirebaseConnection();
@@ -1577,32 +1560,22 @@
             // Запрашиваем доступ к микрофону
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    // Создаем медиа-рекордер
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    
-                    // Обработчики событий записи
-                    mediaRecorder.ondataavailable = (event) => {
-                        audioChunks.push(event.data);
-                    };
-                    
-                    mediaRecorder.onstop = () => {
-                        // Создаем Blob из записанных данных
-                        audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        
-                        // Останавливаем поток
-                        stream.getTracks().forEach(track => track.stop());
-                        
-                        // Отправляем аудио-сообщение
-                        sendVoiceMessage(audioBlob);
-                        
-                        // Сбрасываем состояние
-                        audioChunks = [];
-                        audioBlob = null;
-                    };
+                    // Создаем рекордер
+                    recorder = RecordRTC(stream, {
+                        type: 'audio',
+                        mimeType: 'audio/webm',
+                        recorderType: RecordRTC.StereoAudioRecorder,
+                        numberOfAudioChannels: 1,
+                        desiredSampRate: 16000,
+                        timeSlice: 1000,
+                        ondataavailable: function(blob) {
+                            // Сохраняем записанный кусок
+                            recordedAudio = blob;
+                        }
+                    });
                     
                     // Начинаем запись
-                    mediaRecorder.start();
+                    recorder.startRecording();
                     voiceMessageBtn.classList.add('recording');
                     voiceRecorderIndicator.classList.add('visible');
                     
@@ -1618,7 +1591,7 @@
         
         // Обновление таймера записи
         function updateRecordingTimer() {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+            if (!recorder) return;
             
             const elapsed = Date.now() - recordingStartTime;
             const seconds = Math.floor(elapsed / 1000);
@@ -1638,53 +1611,60 @@
         
         // Остановить запись
         function stopRecording() {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+            if (!recorder) return;
             
-            mediaRecorder.stop();
-            voiceMessageBtn.classList.remove('recording');
-            voiceRecorderIndicator.classList.remove('visible');
-            
-            // Останавливаем таймер
-            if (recordingTimer) {
-                clearTimeout(recordingTimer);
-                recordingTimer = null;
-            }
+            // Останавливаем запись
+            recorder.stopRecording(() => {
+                // Получаем записанный аудио-блоб
+                recordedAudio = recorder.getBlob();
+                
+                // Отправляем голосовое сообщение
+                sendVoiceMessage(recordedAudio);
+                
+                // Освобождаем ресурсы
+                recorder = null;
+                voiceMessageBtn.classList.remove('recording');
+                voiceRecorderIndicator.classList.remove('visible');
+                
+                // Останавливаем таймер
+                if (recordingTimer) {
+                    clearTimeout(recordingTimer);
+                    recordingTimer = null;
+                }
+            });
         }
         
         // Отправить голосовое сообщение
         function sendVoiceMessage(audioBlob) {
             if (!currentPlayer.id || !gameState.roomId) return;
             
-            // Создаем уникальное имя файла
-            const fileName = `voice_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.webm`;
-            const storageRef = storage.ref(`audio_messages/${gameState.roomId}/${fileName}`);
+            // Создаем уникальный ID для сообщения
+            const messageId = 'voice_' + Date.now();
             
-            // Загружаем файл в Firebase Storage
-            storageRef.put(audioBlob)
-                .then(snapshot => {
-                    // Получаем URL для скачивания
-                    return snapshot.ref.getDownloadURL();
-                })
-                .then(downloadURL => {
-                    // Создаем сообщение
-                    const senderName = currentPlayer.name;
-                    const newMessage = {
-                        senderId: currentPlayer.id,
-                        senderName: senderName,
-                        audioUrl: downloadURL,
-                        timestamp: Date.now(),
-                        isAudio: true,
-                        duration: Math.floor((Date.now() - recordingStartTime) / 1000)
-                    };
-                    
-                    // Добавляем сообщение в состояние игры
-                    gameState.chatMessages.push(newMessage);
-                    saveGameState();
-                })
-                .catch(error => {
-                    console.error('Ошибка загрузки аудио:', error);
-                    alert('Не удалось отправить голосовое сообщение');
-                });
+            // Конвертируем blob в base64 для хранения
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = () => {
+                const base64Audio = reader.result;
+                
+                // Создаем сообщение
+                const senderName = currentPlayer.name;
+                const duration = Math.floor((Date.now() - recordingStartTime) / 1000);
+                
+                const newMessage = {
+                    id: messageId,
+                    senderId: currentPlayer.id,
+                    senderName: senderName,
+                    audioData: base64Audio,
+                    timestamp: Date.now(),
+                    isAudio: true,
+                    duration: duration
+                };
+                
+                // Добавляем сообщение в состояние игры
+                gameState.chatMessages.push(newMessage);
+                saveGameState();
+            };
         }
         
         // Открыть модальное окно списка комнат
@@ -1987,7 +1967,7 @@
                     messageDiv.innerHTML = `
                         <div class="message-sender">${msg.senderName}</div>
                         <div class="audio-message">
-                            <audio controls src="${msg.audioUrl}"></audio>
+                            <audio controls src="${msg.audioData}"></audio>
                             <span class="audio-duration">${durationString}</span>
                         </div>
                         <div class="message-time">${timeString}</div>
