@@ -1482,7 +1482,9 @@
         let recordingTimer = null;
         let recordingStartTime = 0;
         let recordedAudio = null;
-        
+        let audioStream = null;
+        let microphoneAccessGranted = false;
+
         // Инициализация игры
         function initGame() {
             // Обработчики событий аутентификации
@@ -1551,42 +1553,51 @@
         function startRecording(e) {
             e.preventDefault();
             
-            // Проверяем поддержку записи голоса
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Ваш браузер не поддерживает запись голоса');
+            // Если запись уже идет, выходим
+            if (recorder) return;
+            
+            // Если доступ к микрофону уже был получен
+            if (microphoneAccessGranted && audioStream) {
+                startRecordingWithStream(audioStream);
                 return;
             }
-            
+
             // Запрашиваем доступ к микрофону
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    // Создаем рекордер
-                    recorder = RecordRTC(stream, {
-                        type: 'audio',
-                        mimeType: 'audio/webm',
-                        recorderType: RecordRTC.StereoAudioRecorder,
-                        numberOfAudioChannels: 1,
-                        desiredSampRate: 16000,
-                        timeSlice: 1000,
-                        ondataavailable: function(blob) {
-                            // Сохраняем записанный кусок
-                            recordedAudio = blob;
-                        }
-                    });
-                    
-                    // Начинаем запись
-                    recorder.startRecording();
-                    voiceMessageBtn.classList.add('recording');
-                    voiceRecorderIndicator.classList.add('visible');
-                    
-                    // Запускаем таймер длительности записи
-                    recordingStartTime = Date.now();
-                    updateRecordingTimer();
+                    microphoneAccessGranted = true;
+                    audioStream = stream;
+                    startRecordingWithStream(stream);
                 })
                 .catch(error => {
                     console.error('Ошибка доступа к микрофону:', error);
                     alert('Не удалось получить доступ к микрофону. Пожалуйста, проверьте разрешения.');
                 });
+        }
+
+        // Начать запись с использованием существующего потока
+        function startRecordingWithStream(stream) {
+            // Создаем рекордер
+            recorder = RecordRTC(stream, {
+                type: 'audio',
+                mimeType: 'audio/webm',
+                recorderType: RecordRTC.StereoAudioRecorder,
+                numberOfAudioChannels: 1,
+                desiredSampRate: 16000,
+                timeSlice: 1000,
+                ondataavailable: function(blob) {
+                    recordedAudio = blob;
+                }
+            });
+            
+            // Начинаем запись
+            recorder.startRecording();
+            voiceMessageBtn.classList.add('recording');
+            voiceRecorderIndicator.classList.add('visible');
+            
+            // Запускаем таймер длительности записи
+            recordingStartTime = Date.now();
+            updateRecordingTimer();
         }
         
         // Обновление таймера записи
@@ -1621,7 +1632,7 @@
                 // Отправляем голосовое сообщение
                 sendVoiceMessage(recordedAudio);
                 
-                // Освобождаем ресурсы
+                // Освобождаем ресурсы (но сохраняем поток)
                 recorder = null;
                 voiceMessageBtn.classList.remove('recording');
                 voiceRecorderIndicator.classList.remove('visible');
@@ -1632,6 +1643,15 @@
                     recordingTimer = null;
                 }
             });
+        }
+
+        // Освободить ресурсы микрофона
+        function cleanupMicrophone() {
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+                audioStream = null;
+            }
+            microphoneAccessGranted = false;
         }
         
         // Отправить голосовое сообщение
@@ -1791,6 +1811,7 @@
         
         // Выход пользователя
         function logoutUser() {
+            cleanupMicrophone();
             auth.signOut()
                 .then(() => {
                     currentUser = null;
@@ -2749,6 +2770,8 @@
         
         // Возврат на экран ввода ID
         function goBackToJoinScreen() {
+            cleanupMicrophone();
+            
             // Удаляем игрока из комнаты
             if (gameState.roomId) {
                 gameState.players = gameState.players.filter(p => p.id !== currentPlayer.id);
