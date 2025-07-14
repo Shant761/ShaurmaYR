@@ -24,8 +24,8 @@
             animation: gradientBG 15s ease infinite;
             color: white;
             min-height: 100vh;
-            padding: 10px;
             overflow: hidden;
+            position: relative;
         }
         
         @keyframes gradientBG {
@@ -34,17 +34,28 @@
             100% { background-position: 0% 50%; }
         }
         
+        /* TikTok-like container with vertical scrolling */
+        .app-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        
         .container {
             max-width: 100%;
             background: rgba(0, 0, 0, 0.8);
-            border-radius: 20px;
+            border-radius: 0;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
             position: relative;
-            border: 1px solid #ffcc0033;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 15px);
         }
         
         .game-screen {
@@ -54,6 +65,8 @@
             overflow: hidden;
             flex-direction: column;
             position: relative;
+            scroll-snap-align: start;
+            min-height: 100vh;
         }
         
         .active {
@@ -178,7 +191,9 @@
             padding: 10px 15px;
             background: rgba(0, 0, 0, 0.6);
             border-bottom: 2px solid #b21f1f;
-            position: relative;
+            position: sticky;
+            top: 0;
+            z-index: 10;
             overflow: hidden;
             display: flex;
             justify-content: space-between;
@@ -1132,258 +1147,283 @@
                 top: 140px;
             }
         }
+        
+        /* Вертикальный скролл как в TikTok */
+        .scrollable-section {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        .scrollable-section::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        
+        /* Улучшение для вертикального скролла */
+        .join-container, .lobby-container, .profile-container, .auth-container, .rooms-container {
+            height: auto;
+            min-height: calc(100vh - 150px);
+        }
+        
+        /* Плавный скролл */
+        html {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="firebase-status" id="firebaseStatus">
-            <i class="fas fa-database"></i> Firebase Online
-        </div>
-        
-        <!-- Кнопка чата в верхнем правом углу -->
-        <div class="chat-toggle-btn" id="chatToggleBtn">
-            <i class="fas fa-comment-dots chat-icon"></i>
-            <div class="badge" id="unreadBadge" style="display: none;">0</div>
-        </div>
-        
-        <!-- Кнопка списка комнат -->
-        <div class="rooms-toggle-btn" id="roomsToggleBtn">
-            <i class="fas fa-door-open rooms-icon"></i>
-        </div>
-        
-        <header>
-            <div class="header-content">
-                <h1><i class="fas fa-user-secret"></i> МАФИЯ ДЛЯ СМАРТФОНА</h1>
-                <div class="subtitle">Играйте с друзьями и общайтесь в голосовом чате</div>
-            </div>
-            <div class="user-info" id="userInfo" style="display: none;">
-                <div class="user-avatar" id="userAvatar">?</div>
-                <div class="user-name" id="userName">Гость</div>
-                <div class="ton-balance" id="tonBalance">0 TON</div>
-                <button class="logout-btn" id="logoutBtn" title="Выйти">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </header>
-        
-        <!-- Экран аутентификации -->
-        <div id="authScreen" class="game-screen active">
-            <div class="auth-container">
-                <h2>Вход / Регистрация</h2>
-                <div class="input-group">
-                    <input type="text" id="emailInput" placeholder="Email" value="test@example.com">
-                    <input type="password" id="passwordInput" placeholder="Пароль" value="password">
-                    <div style="display: flex; gap: 10px;">
-                        <button id="loginBtn" style="flex: 1;">Войти</button>
-                        <button id="signupBtn" style="flex: 1;">Зарегистрироваться</button>
-                    </div>
-                    <button id="guestBtn">Играть как гость</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Экран профиля -->
-        <div id="profileScreen" class="game-screen">
-            <div class="back-btn" id="backToMainBtn">
-                <i class="fas fa-arrow-left"></i> Назад
+    <div class="app-container">
+        <div class="container">
+            <div class="firebase-status" id="firebaseStatus">
+                <i class="fas fa-database"></i> Firebase Online
             </div>
             
-            <div class="profile-container">
-                <div class="profile-card">
-                    <div class="profile-avatar" id="profileAvatar">?</div>
-                    <h2 id="profileName">Игрок</h2>
-                    <div id="profileEmail" class="subtitle">email@example.com</div>
+            <!-- Кнопка чата в верхнем правом углу -->
+            <div class="chat-toggle-btn" id="chatToggleBtn">
+                <i class="fas fa-comment-dots chat-icon"></i>
+                <div class="badge" id="unreadBadge" style="display: none;">0</div>
+            </div>
+            
+            <!-- Кнопка списка комнат -->
+            <div class="rooms-toggle-btn" id="roomsToggleBtn">
+                <i class="fas fa-door-open rooms-icon"></i>
+            </div>
+            
+            <header>
+                <div class="header-content">
+                    <h1><i class="fas fa-user-secret"></i> МАФИЯ ДЛЯ СМАРТФОНА</h1>
+                    <div class="subtitle">Играйте с друзьями и общайтесь в голосовом чате</div>
+                </div>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">?</div>
+                    <div class="user-name" id="userName">Гость</div>
+                    <div class="ton-balance" id="tonBalance">0 TON</div>
+                    <button class="logout-btn" id="logoutBtn" title="Выйти">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Экран аутентификации -->
+            <div id="authScreen" class="game-screen active">
+                <div class="auth-container scrollable-section">
+                    <h2>Вход / Регистрация</h2>
+                    <div class="input-group">
+                        <input type="text" id="emailInput" placeholder="Email" value="test@example.com">
+                        <input type="password" id="passwordInput" placeholder="Пароль" value="password">
+                        <div style="display: flex; gap: 10px;">
+                            <button id="loginBtn" style="flex: 1;">Войти</button>
+                            <button id="signupBtn" style="flex: 1;">Зарегистрироваться</button>
+                        </div>
+                        <button id="guestBtn">Играть как гость</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Экран профиля -->
+            <div id="profileScreen" class="game-screen">
+                <div class="back-btn" id="backToMainBtn">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </div>
+                
+                <div class="profile-container scrollable-section">
+                    <div class="profile-card">
+                        <div class="profile-avatar" id="profileAvatar">?</div>
+                        <h2 id="profileName">Игрок</h2>
+                        <div id="profileEmail" class="subtitle">email@example.com</div>
+                        
+                        <div class="profile-stats">
+                            <div class="stat-card">
+                                <div class="stat-value" id="gamesPlayed">0</div>
+                                <div class="stat-label">Игр сыграно</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="gamesWon">0</div>
+                                <div class="stat-label">Побед</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="mafiaWins">0</div>
+                                <div class="stat-label">Побед мафией</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="civilianWins">0</div>
+                                <div class="stat-label">Побед мирным</div>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <div class="profile-stats">
-                        <div class="stat-card">
-                            <div class="stat-value" id="gamesPlayed">0</div>
-                            <div class="stat-label">Игр сыграно</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="gamesWon">0</div>
-                            <div class="stat-label">Побед</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="mafiaWins">0</div>
-                            <div class="stat-label">Побед мафией</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="civilianWins">0</div>
-                            <div class="stat-label">Побед мирным</div>
+                    <div class="vip-shop" id="vipShop" style="display: none;">
+                        <h3><i class="fas fa-crown"></i> VIP Магазин</h3>
+                        <div id="vipRoleList"></div>
+                        <button id="getTestTonBtn" style="margin-top: 10px;">Получить тестовые TON (100)</button>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button id="playBtn">Играть</button>
+                        <button id="historyBtn">История игр</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Экран входа в игру -->
+            <div id="joinScreen" class="game-screen">
+                <div class="back-btn" id="backToProfileBtn">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </div>
+                
+                <div class="join-container scrollable-section">
+                    <div class="input-group">
+                        <input type="text" id="roomIdInput" placeholder="Введите ID комнаты (MAF-1234)">
+                        <button id="joinRoomBtn">Присоединиться</button>
+                    </div>
+                    
+                    <div class="input-group">
+                        <button id="createRoomBtn">Создать новую игру</button>
+                    </div>
+                    
+                    <div class="instructions">
+                        <h3><i class="fas fa-info-circle"></i> Как играть:</h3>
+                        <ul>
+                            <li>Создайте игру или присоединитесь по ID</li>
+                            <li>Игра распределяет роли: Мафия, Шериф, Мирные</li>
+                            <li>Ночью мафия убивает, шериф проверяет</li>
+                            <li>Днём обсуждайте и голосуйте за подозреваемого</li>
+                            <li>Общайтесь с игроками в голосовом чате</li>
+                            <li><b>VIP:</b> Покупайте особые роли за TON</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Лобби -->
+            <div id="lobbyScreen" class="game-screen">
+                <div class="back-btn" id="backBtn">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </div>
+                
+                <div class="game-content">
+                    <div class="game-main scrollable-section">
+                        <div class="lobby-container">
+                            <div class="room-info">
+                                <div>ID комнаты: <span id="roomId" class="room-id">MAF-0000</span></div>
+                                <div class="copy-btn" id="copyBtn"><i class="fas fa-copy"></i></div>
+                            </div>
+                            
+                            <div class="game-info">
+                                <div>Игроков: <span id="playerCount">0</span>/5</div>
+                                <div>Статус: <span id="lobbyStatus">Ожидание</span></div>
+                            </div>
+                            
+                            <div class="player-list" id="playerList">
+                                <!-- Игроки будут добавляться здесь -->
+                            </div>
+                            
+                            <button id="startBtn" disabled>Начать игру</button>
                         </div>
                     </div>
                 </div>
-                
-                <div class="vip-shop" id="vipShop" style="display: none;">
-                    <h3><i class="fas fa-crown"></i> VIP Магазин</h3>
-                    <div id="vipRoleList"></div>
-                    <button id="getTestTonBtn" style="margin-top: 10px;">Получить тестовые TON (100)</button>
-                </div>
-                
-                <div class="profile-actions">
-                    <button id="playBtn">Играть</button>
-                    <button id="historyBtn">История игр</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Экран входа в игру -->
-        <div id="joinScreen" class="game-screen">
-            <div class="back-btn" id="backToProfileBtn">
-                <i class="fas fa-arrow-left"></i> Назад
             </div>
             
-            <div class="join-container">
-                <div class="input-group">
-                    <input type="text" id="roomIdInput" placeholder="Введите ID комнаты (MAF-1234)">
-                    <button id="joinRoomBtn">Присоединиться</button>
+            <!-- Игровой экран -->
+            <div id="gameScreen" class="game-screen">
+                <div class="back-btn" id="backToLobbyBtn">
+                    <i class="fas fa-arrow-left"></i>
                 </div>
                 
-                <div class="input-group">
-                    <button id="createRoomBtn">Создать новую игру</button>
-                </div>
-                
-                <div class="instructions">
-                    <h3><i class="fas fa-info-circle"></i> Как играть:</h3>
-                    <ul>
-                        <li>Создайте игру или присоединитесь по ID</li>
-                        <li>Игра распределяет роли: Мафия, Шериф, Мирные</li>
-                        <li>Ночью мафия убивает, шериф проверяет</li>
-                        <li>Днём обсуждайте и голосуйте за подозреваемого</li>
-                        <li>Общайтесь с игроками в голосовом чате</li>
-                        <li><b>VIP:</b> Покупайте особые роли за TON</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Лобби -->
-        <div id="lobbyScreen" class="game-screen">
-            <div class="back-btn" id="backBtn">
-                <i class="fas fa-arrow-left"></i> Назад
-            </div>
-            
-            <div class="game-content">
-                <div class="game-main">
-                    <div class="lobby-container">
-                        <div class="room-info">
-                            <div>ID комнаты: <span id="roomId" class="room-id">MAF-0000</span></div>
-                            <div class="copy-btn" id="copyBtn"><i class="fas fa-copy"></i></div>
-                        </div>
+                <div class="game-content">
+                    <div class="game-main scrollable-section">
+                        <div class="phase-timer" id="phaseTimer">02:00</div>
                         
                         <div class="game-info">
-                            <div>Игроков: <span id="playerCount">0</span>/5</div>
-                            <div>Статус: <span id="lobbyStatus">Ожидание</span></div>
+                            <div>Игроков: <span id="gamePlayerCount">0</span>/5</div>
+                            <div>День: <span id="dayCount">1</span></div>
                         </div>
                         
-                        <div class="player-list" id="playerList">
-                            <!-- Игроки будут добавляться здесь -->
+                        <div id="phaseDisplay" class="phase-display night">НОЧЬ</div>
+                        
+                        <div class="action-container">
+                            <div class="action-card">
+                                <div class="action-title">Ваша роль</div>
+                                <div id="playerRole">Ожидание...</div>
+                                <div class="role-info" id="roleInfo">Описание роли появится здесь</div>
+                                <div id="playerStatus" class="player-status alive">Статус: жив</div>
+                            </div>
+                            
+                            <div class="action-card">
+                                <div class="action-title">Ваше действие</div>
+                                <div id="actionDescription">Ожидайте начала игры...</div>
+                                <div id="actionButtons" style="margin-top: 8px;"></div>
+                            </div>
                         </div>
                         
-                        <button id="startBtn" disabled>Начать игру</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Игровой экран -->
-        <div id="gameScreen" class="game-screen">
-            <div class="back-btn" id="backToLobbyBtn">
-                <i class="fas fa-arrow-left"></i>
-            </div>
-            
-            <div class="game-content">
-                <div class="game-main">
-                    <div class="phase-timer" id="phaseTimer">02:00</div>
-                    
-                    <div class="game-info">
-                        <div>Игроков: <span id="gamePlayerCount">0</span>/5</div>
-                        <div>День: <span id="dayCount">1</span></div>
-                    </div>
-                    
-                    <div id="phaseDisplay" class="phase-display night">НОЧЬ</div>
-                    
-                    <div class="action-container">
-                        <div class="action-card">
-                            <div class="action-title">Ваша роль</div>
-                            <div id="playerRole">Ожидание...</div>
-                            <div class="role-info" id="roleInfo">Описание роли появится здесь</div>
-                            <div id="playerStatus" class="player-status alive">Статус: жив</div>
-                        </div>
-                        
-                        <div class="action-card">
-                            <div class="action-title">Ваше действие</div>
-                            <div id="actionDescription">Ожидайте начала игры...</div>
-                            <div id="actionButtons" style="margin-top: 8px;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="log-container">
-                        <div class="log-title"><i class="fas fa-scroll"></i> События</div>
-                        <div id="gameLog">
-                            <div class="log-entry">Игра началась. Наступает ночь...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Экран результатов -->
-        <div id="resultScreen" class="game-screen">
-            <div class="game-over">
-                <div id="winnerTitle" class="winner-title">Победа мирных жителей!</div>
-                <div class="player-list" id="resultPlayerList">
-                    <!-- Результаты игроков будут здесь -->
-                </div>
-                <button id="restartBtn"><i class="fas fa-redo"></i> Новая игра</button>
-            </div>
-        </div>
-        
-        <!-- Раздвижной чат -->
-        <div class="chat-container" id="chatContainer">
-            <div class="chat-header">
-                <span><i class="fas fa-comments"></i> Игровой чат</span>
-                <button class="close-chat-btn" id="closeChatBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="system-message">Добро пожаловать в чат! Начните общение с другими игроками.</div>
-            </div>
-            <div class="chat-input-container">
-                <input type="text" class="chat-input" id="chatInput" placeholder="Напишите сообщение...">
-                <button class="voice-message-btn" id="voiceMessageBtn" title="Записать голосовое сообщение">
-                    <i class="fas fa-microphone"></i>
-                </button>
-                <button class="chat-send-btn" id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
-            </div>
-            <div class="voice-recorder-indicator" id="voiceRecorderIndicator">
-                <i class="fas fa-microphone"></i> Идет запись... Говорите!
-                <span class="audio-duration-indicator" id="audioDuration">00:00</span>
-            </div>
-        </div>
-        
-        <!-- Модальное окно списка комнат -->
-        <div class="rooms-modal" id="roomsModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-door-open"></i> Доступные комнаты</h3>
-                    <button class="close-modal-btn" id="closeRoomsModalBtn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="rooms-list" id="roomsList">
-                        <div class="room-item">
-                            <div class="room-details">
-                                <div class="room-id">Загрузка комнат...</div>
+                        <div class="log-container">
+                            <div class="log-title"><i class="fas fa-scroll"></i> События</div>
+                            <div id="gameLog">
+                                <div class="log-entry">Игра началась. Наступает ночь...</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Экран результатов -->
+            <div id="resultScreen" class="game-screen">
+                <div class="game-over scrollable-section">
+                    <div id="winnerTitle" class="winner-title">Победа мирных жителей!</div>
+                    <div class="player-list" id="resultPlayerList">
+                        <!-- Результаты игроков будут здесь -->
+                    </div>
+                    <button id="restartBtn"><i class="fas fa-redo"></i> Новая игра</button>
+                </div>
+            </div>
+            
+            <!-- Раздвижной чат -->
+            <div class="chat-container" id="chatContainer">
+                <div class="chat-header">
+                    <span><i class="fas fa-comments"></i> Игровой чат</span>
+                    <button class="close-chat-btn" id="closeChatBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="system-message">Добро пожаловать в чат! Начните общение с другими игроками.</div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Напишите сообщение...">
+                    <button class="voice-message-btn" id="voiceMessageBtn" title="Записать голосовое сообщение">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="chat-send-btn" id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                <div class="voice-recorder-indicator" id="voiceRecorderIndicator">
+                    <i class="fas fa-microphone"></i> Идет запись... Говорите!
+                    <span class="audio-duration-indicator" id="audioDuration">00:00</span>
+                </div>
+            </div>
+            
+            <!-- Модальное окно списка комнат -->
+            <div class="rooms-modal" id="roomsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-door-open"></i> Доступные комнаты</h3>
+                        <button class="close-modal-btn" id="closeRoomsModalBtn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="rooms-list" id="roomsList">
+                            <div class="room-item">
+                                <div class="room-details">
+                                    <div class="room-id">Загрузка комнат...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Контейнер для popup сообщений -->
+            <div class="chat-popup-container" id="chatPopupContainer"></div>
         </div>
-        
-        <!-- Контейнер для popup сообщений -->
-        <div class="chat-popup-container" id="chatPopupContainer"></div>
     </div>
 
     <script>
