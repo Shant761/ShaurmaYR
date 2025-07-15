@@ -1569,6 +1569,8 @@
         let recordingTimer = null;
         let recordingStartTime = 0;
         let recordedAudio = null;
+        let audioStream = null;
+        let isRecording = false;
         
         // Состояние доступа к микрофону
         let microphoneAccessGranted = false;
@@ -1576,9 +1578,6 @@
         
         // Инициализация игры
         function initGame() {
-            // Проверяем доступ к микрофону при старте
-            checkMicrophoneAccess();
-            
             // Обработчики событий аутентификации
             loginBtn.addEventListener('click', loginUser);
             signupBtn.addEventListener('click', signupUser);
@@ -1645,32 +1644,6 @@
             });
         }
         
-        // Проверка доступа к микрофону
-        async function checkMicrophoneAccess() {
-            try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    console.log('Браузер не поддерживает доступ к микрофону');
-                    updateMicrophoneUI(false);
-                    return;
-                }
-                
-                // Создаем временный поток для проверки разрешений
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // Немедленно останавливаем все треки
-                stream.getTracks().forEach(track => track.stop());
-                
-                microphoneAccessGranted = true;
-                console.log('Доступ к микрофону подтвержден');
-            } catch (error) {
-                console.error('Ошибка доступа к микрофону:', error);
-                microphoneAccessGranted = false;
-            } finally {
-                microphoneAccessChecked = true;
-                updateMicrophoneUI(microphoneAccessGranted);
-            }
-        }
-        
         // Обновление UI микрофона
         function updateMicrophoneUI(accessGranted) {
             if (accessGranted) {
@@ -1688,30 +1661,52 @@
         function startRecording(e) {
             e.preventDefault();
             
-            // Если доступ к микрофону запрещен
+            // Если уже записываем, выходим
+            if (isRecording) return;
+            
+            // Если доступ запрещен, показываем сообщение
             if (microphoneAccessChecked && !microphoneAccessGranted) {
                 alert('Для записи голосовых сообщений разрешите доступ к микрофону в настройках браузера');
                 return;
             }
             
-            // Если доступ еще не проверен
-            if (!microphoneAccessChecked) {
-                alert('Проверяем доступ к микрофону...');
-                checkMicrophoneAccess().then(() => {
-                    if (microphoneAccessGranted) {
-                        startRecordingProcess();
-                    } else {
-                        alert('Для записи голосовых сообщений разрешите доступ к микрофону');
-                    }
-                });
-                return;
-            }
-            
+            // Запускаем процесс записи
             startRecordingProcess();
         }
         
         // Основной процесс записи
         function startRecordingProcess() {
+            // Если доступ еще не проверяли
+            if (!microphoneAccessChecked) {
+                // Запрашиваем доступ к микрофону
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        // Устанавливаем флаги
+                        microphoneAccessGranted = true;
+                        microphoneAccessChecked = true;
+                        updateMicrophoneUI(true);
+                        
+                        // Останавливаем поток, так как он нам нужен только для проверки
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        // Теперь запускаем запись
+                        startRecordingWithAccess();
+                    })
+                    .catch(error => {
+                        console.error('Ошибка доступа к микрофону:', error);
+                        microphoneAccessGranted = false;
+                        microphoneAccessChecked = true;
+                        updateMicrophoneUI(false);
+                        alert('Не удалось получить доступ к микрофону. Пожалуйста, проверьте разрешения.');
+                    });
+            } else {
+                // Доступ уже проверен - запускаем запись
+                startRecordingWithAccess();
+            }
+        }
+        
+        // Запуск записи при наличии доступа
+        function startRecordingWithAccess() {
             // Проверяем поддержку записи голоса
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert('Ваш браузер не поддерживает запись голоса');
@@ -1721,6 +1716,9 @@
             // Запрашиваем доступ к микрофону
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
+                    // Сохраняем поток
+                    audioStream = stream;
+                    
                     // Создаем рекордер
                     recorder = RecordRTC(stream, {
                         type: 'audio',
@@ -1737,6 +1735,7 @@
                     
                     // Начинаем запись
                     recorder.startRecording();
+                    isRecording = true;
                     voiceMessageBtn.classList.add('recording');
                     voiceRecorderIndicator.classList.add('visible');
                     
@@ -1784,8 +1783,15 @@
                 
                 // Освобождаем ресурсы
                 recorder = null;
+                isRecording = false;
                 voiceMessageBtn.classList.remove('recording');
                 voiceRecorderIndicator.classList.remove('visible');
+                
+                // Останавливаем поток
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                }
                 
                 // Останавливаем таймер
                 if (recordingTimer) {
@@ -2486,702 +2492,702 @@
                 
                 // Переключаемся на лобби
                 joinScreen.classList.remove('active');
-                lobbyScreen.classList.add('active');
-                
-                // Обновляем лобби
-                updateLobby();
-                
-                // Слушаем изменения в Firebase
-                listenForGameChanges();
-            });
-        }
-        
-        // Генерация ID игрока
-        function generatePlayerId() {
-            return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-        }
-        
-        // Загрузка состояния игры из Firebase
-        function loadGameState(roomId, callback) {
-            const gameRef = database.ref(`rooms/${roomId}`);
-            gameRef.once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    gameState = snapshot.val();
-                    callback();
-                } else {
-                    alert('Комната не найдена');
-                }
-            });
-        }
-        
-        // Сохранение состояния игры в Firebase
-        function saveGameState() {
-            const gameRef = database.ref(`rooms/${gameState.roomId}`);
-            gameRef.set(gameState);
-        }
-        
-        // Прослушивание изменений в игре
-        function listenForGameChanges() {
-            const gameRef = database.ref(`rooms/${gameState.roomId}`);
-            gameRef.on('value', snapshot => {
-                if (snapshot.exists()) {
-                    gameState = snapshot.val();
-                    
-                    // Обновляем интерфейс в зависимости от экрана
-                    if (lobbyScreen.classList.contains('active')) {
-                        updateLobby();
-                    } else if (gameScreen.classList.contains('active')) {
-                        updateGameScreen();
-                    } else if (resultScreen.classList.contains('active')) {
-                        updateResultScreen();
-                    }
-                    
-                    // Обновляем чат всегда
-                    renderChatMessages();
-                    
-                    // Если игра началась, переключаем на игровой экран
-                    if (gameState.phase !== 'lobby' && lobbyScreen.classList.contains('active')) {
-                        lobbyScreen.classList.remove('active');
-                        gameScreen.classList.add('active');
-                        updateGameScreen();
-                    }
-                    
-                    // Если игра завершена, переключаем на экран результатов
-                    if (gameState.gameOver && gameScreen.classList.contains('active')) {
-                        gameScreen.classList.remove('active');
-                        resultScreen.classList.add('active');
-                        updateResultScreen();
-                    }
-                    
-                    // Обновляем таймер
-                    updatePhaseTimer();
-                }
-            });
-        }
-        
-        // Обновление лобби
-        function updateLobby() {
-            playerList.innerHTML = '';
-            playerCount.textContent = gameState.players.length;
+            lobbyScreen.classList.add('active');
             
-            // Обновляем статус лобби
-            if (gameState.players.length === 0) {
-                lobbyStatus.textContent = 'Ожидание игроков';
-            } else if (gameState.players.length < 3) {
-                lobbyStatus.textContent = `Ожидание игроков (минимум 3)`;
-            } else if (gameState.players.length < 5) {
-                lobbyStatus.textContent = `Ожидание игроков (${5 - gameState.players.length} из 5)`;
+            // Обновляем лобби
+            updateLobby();
+            
+            // Слушаем изменения в Firebase
+            listenForGameChanges();
+        });
+    }
+    
+    // Генерация ID игрока
+    function generatePlayerId() {
+        return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    }
+    
+    // Загрузка состояния игры из Firebase
+    function loadGameState(roomId, callback) {
+        const gameRef = database.ref(`rooms/${roomId}`);
+        gameRef.once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                gameState = snapshot.val();
+                callback();
             } else {
-                lobbyStatus.textContent = 'Лобби заполнено!';
+                alert('Комната не найдена');
+            }
+        });
+    }
+    
+    // Сохранение состояния игры в Firebase
+    function saveGameState() {
+        const gameRef = database.ref(`rooms/${gameState.roomId}`);
+        gameRef.set(gameState);
+    }
+    
+    // Прослушивание изменений в игре
+    function listenForGameChanges() {
+        const gameRef = database.ref(`rooms/${gameState.roomId}`);
+        gameRef.on('value', snapshot => {
+            if (snapshot.exists()) {
+                gameState = snapshot.val();
+                
+                // Обновляем интерфейс в зависимости от экрана
+                if (lobbyScreen.classList.contains('active')) {
+                    updateLobby();
+                } else if (gameScreen.classList.contains('active')) {
+                    updateGameScreen();
+                } else if (resultScreen.classList.contains('active')) {
+                    updateResultScreen();
+                }
+                
+                // Обновляем чат всегда
+                renderChatMessages();
+                
+                // Если игра началась, переключаем на игровой экран
+                if (gameState.phase !== 'lobby' && lobbyScreen.classList.contains('active')) {
+                    lobbyScreen.classList.remove('active');
+                    gameScreen.classList.add('active');
+                    updateGameScreen();
+                }
+                
+                // Если игра завершена, переключаем на экран результатов
+                if (gameState.gameOver && gameScreen.classList.contains('active')) {
+                    gameScreen.classList.remove('active');
+                    resultScreen.classList.add('active');
+                    updateResultScreen();
+                }
+                
+                // Обновляем таймер
+                updatePhaseTimer();
+            }
+        });
+    }
+    
+    // Обновление лобби
+    function updateLobby() {
+        playerList.innerHTML = '';
+        playerCount.textContent = gameState.players.length;
+        
+        // Обновляем статус лобби
+        if (gameState.players.length === 0) {
+            lobbyStatus.textContent = 'Ожидание игроков';
+        } else if (gameState.players.length < 3) {
+            lobbyStatus.textContent = `Ожидание игроков (минимум 3)`;
+        } else if (gameState.players.length < 5) {
+            lobbyStatus.textContent = `Ожидание игроков (${5 - gameState.players.length} из 5)`;
+        } else {
+            lobbyStatus.textContent = 'Лобби заполнено!';
+        }
+        
+        // Активируем кнопку старта для хоста
+        startBtn.disabled = !(currentPlayer.isHost && gameState.players.length >= 3);
+        
+        // Отображаем игроков
+        gameState.players.forEach(player => {
+            const playerCard = document.createElement('div');
+            playerCard.className = `player-card ${player.isHost ? 'host' : ''}`;
+            
+            let playerInfo = `<div class="player-name">${player.name}</div>`;
+            if (player.isHost) {
+                playerInfo += `<div class="player-status"><i class="fas fa-crown"></i> Создатель</div>`;
+            } else {
+                playerInfo += `<div class="player-status">Ожидание...</div>`;
             }
             
-            // Активируем кнопку старта для хоста
-            startBtn.disabled = !(currentPlayer.isHost && gameState.players.length >= 3);
-            
-            // Отображаем игроков
-            gameState.players.forEach(player => {
-                const playerCard = document.createElement('div');
-                playerCard.className = `player-card ${player.isHost ? 'host' : ''}`;
-                
-                let playerInfo = `<div class="player-name">${player.name}</div>`;
-                if (player.isHost) {
-                    playerInfo += `<div class="player-status"><i class="fas fa-crown"></i> Создатель</div>`;
-                } else {
-                    playerInfo += `<div class="player-status">Ожидание...</div>`;
-                }
-                
-                if (player.isVIP) {
-                    playerInfo += `<div class="player-status"><span class="vip-badge">VIP</span></div>`;
-                }
-                
-                playerCard.innerHTML = playerInfo;
-                playerList.appendChild(playerCard);
-            });
-        }
-        
-        // Начало игры
-        function startGame() {
-            // Перемешиваем роли
-            shuffleRoles();
-            
-            // Назначаем роли
-            assignRoles();
-            
-            // Добавляем сообщение в чат
-            gameState.chatMessages.push({
-                isSystem: true,
-                text: 'Игра началась! Наступает ночь...',
-                timestamp: Date.now()
-            });
-            
-            // Устанавливаем первого игрока
-            gameState.currentPlayer = gameState.players[0].id;
-            gameState.phase = 'night';
-            gameState.status = 'in-progress'; // Меняем статус комнаты
-            gameState.logs = [{message: 'Игра началась! Наступает ночь...', timestamp: Date.now()}];
-            
-            // Устанавливаем таймер фазы
-            gameState.phaseEndTime = Date.now() + gameState.phaseDuration;
-            
-            // Сохраняем состояние
-            saveGameState();
-        }
-        
-        // Перемешивание ролей
-        function shuffleRoles() {
-            for (let i = roles.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [roles[i], roles[j]] = [roles[j], roles[i]];
+            if (player.isVIP) {
+                playerInfo += `<div class="player-status"><span class="vip-badge">VIP</span></div>`;
             }
-        }
+            
+            playerCard.innerHTML = playerInfo;
+            playerList.appendChild(playerCard);
+        });
+    }
+    
+    // Начало игры
+    function startGame() {
+        // Перемешиваем роли
+        shuffleRoles();
         
-        // Назначение ролей игрокам
-        function assignRoles() {
-            let assignedRoles = [...roles];
-            
-            // Назначаем VIP-роли если есть
-            gameState.players.forEach(player => {
-                if (player.isVIP && player.vipRole) {
-                    player.role = player.vipRole;
-                }
-            });
-            
-            // Назначаем оставшиеся роли
-            gameState.players.forEach((player, index) => {
-                if (!player.role) {
-                    player.role = assignedRoles[index] || 'civilian';
-                }
-            });
-        }
+        // Назначаем роли
+        assignRoles();
         
-        // Обновление игрового экрана
-        function updateGameScreen() {
-            // Находим текущего игрока в состоянии
-            const player = gameState.players.find(p => p.id === currentPlayer.id);
-            if (!player) return;
-            
-            // Обновляем количество живых игроков
-            const alivePlayers = gameState.players.filter(p => p.status === 'alive');
-            gamePlayerCount.textContent = `${alivePlayers.length}/${gameState.players.length}`;
-            
-            dayCount.textContent = gameState.dayCount;
-            
-            // Установка фазы
-            phaseDisplay.textContent = gameState.phase === 'night' ? 'НОЧЬ' : 'ДЕНЬ';
-            phaseDisplay.className = `phase-display ${gameState.phase}`;
-            
-            // Отображение роли текущего игрока
-            const roleName = roleTranslations[player.role] || player.role;
-            playerRole.innerHTML = `${roleName}${player.isVIP ? ' <span class="vip-badge">VIP</span>' : ''}`;
-            roleInfo.textContent = roleDescriptions[player.role] || '';
-            playerStatus.textContent = `Статус: ${player.status === 'alive' ? 'жив' : 'мёртв'}`;
-            playerStatus.className = `player-status ${player.status}`;
-            
-            // Обновление описания действий
-            updateActionDescription(player);
-            
-            // Обновление логов
-            updateGameLog();
-            
-            // Обновляем таймер
-            updatePhaseTimer();
-        }
+        // Добавляем сообщение в чат
+        gameState.chatMessages.push({
+            isSystem: true,
+            text: 'Игра началась! Наступает ночь...',
+            timestamp: Date.now()
+        });
         
-        // Обновление таймера фазы
-        function updatePhaseTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            
-            if (gameState.phase === 'lobby' || gameState.gameOver) return;
-            
-            timerInterval = setInterval(() => {
-                const now = Date.now();
-                const timeLeft = Math.max(0, gameState.phaseEndTime - now);
-                const minutes = Math.floor(timeLeft / 60000);
-                const seconds = Math.floor((timeLeft % 60000) / 1000);
-                
-                phaseTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                // Автоматическое завершение фазы по таймеру
-                if (timeLeft <= 0) {
-                    endPhase();
-                }
-            }, 1000);
+        // Устанавливаем первого игрока
+        gameState.currentPlayer = gameState.players[0].id;
+        gameState.phase = 'night';
+        gameState.status = 'in-progress'; // Меняем статус комнаты
+        gameState.logs = [{message: 'Игра началась! Наступает ночь...', timestamp: Date.now()}];
+        
+        // Устанавливаем таймер фазы
+        gameState.phaseEndTime = Date.now() + gameState.phaseDuration;
+        
+        // Сохраняем состояние
+        saveGameState();
+    }
+    
+    // Перемешивание ролей
+    function shuffleRoles() {
+        for (let i = roles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [roles[i], roles[j]] = [roles[j], roles[i]];
         }
+    }
+    
+    // Назначение ролей игрокам
+    function assignRoles() {
+        let assignedRoles = [...roles];
+        
+        // Назначаем VIP-роли если есть
+        gameState.players.forEach(player => {
+            if (player.isVIP && player.vipRole) {
+                player.role = player.vipRole;
+            }
+        });
+        
+        // Назначаем оставшиеся роли
+        gameState.players.forEach((player, index) => {
+            if (!player.role) {
+                player.role = assignedRoles[index] || 'civilian';
+            }
+        });
+    }
+    
+    // Обновление игрового экрана
+    function updateGameScreen() {
+        // Находим текущего игрока в состоянии
+        const player = gameState.players.find(p => p.id === currentPlayer.id);
+        if (!player) return;
+        
+        // Обновляем количество живых игроков
+        const alivePlayers = gameState.players.filter(p => p.status === 'alive');
+        gamePlayerCount.textContent = `${alivePlayers.length}/${gameState.players.length}`;
+        
+        dayCount.textContent = gameState.dayCount;
+        
+        // Установка фазы
+        phaseDisplay.textContent = gameState.phase === 'night' ? 'НОЧЬ' : 'ДЕНЬ';
+        phaseDisplay.className = `phase-display ${gameState.phase}`;
+        
+        // Отображение роли текущего игрока
+        const roleName = roleTranslations[player.role] || player.role;
+        playerRole.innerHTML = `${roleName}${player.isVIP ? ' <span class="vip-badge">VIP</span>' : ''}`;
+        roleInfo.textContent = roleDescriptions[player.role] || '';
+        playerStatus.textContent = `Статус: ${player.status === 'alive' ? 'жив' : 'мёртв'}`;
+        playerStatus.className = `player-status ${player.status}`;
         
         // Обновление описания действий
-        function updateActionDescription(player) {
-            actionButtons.innerHTML = '';
+        updateActionDescription(player);
+        
+        // Обновление логов
+        updateGameLog();
+        
+        // Обновляем таймер
+        updatePhaseTimer();
+    }
+    
+    // Обновление таймера фазы
+    function updatePhaseTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        
+        if (gameState.phase === 'lobby' || gameState.gameOver) return;
+        
+        timerInterval = setInterval(() => {
+            const now = Date.now();
+            const timeLeft = Math.max(0, gameState.phaseEndTime - now);
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
             
-            // Если игрок мертв
-            if (player.status !== 'alive') {
-                actionDescription.textContent = 'Вы мертвы и не можете действовать.';
-                return;
-            }
+            phaseTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            if (gameState.phase === 'night') {
-                switch(player.role) {
-                    case 'mafia':
-                        actionDescription.textContent = 'Выберите игрока для устранения:';
-                        renderPlayerActions('kill', player);
-                        break;
-                    case 'sheriff':
-                        actionDescription.textContent = 'Выберите игрока для проверки:';
-                        renderPlayerActions('check', player);
-                        break;
-                    case 'doctor':
-                        actionDescription.textContent = 'Выберите игрока для лечения:';
-                        renderPlayerActions('heal', player);
-                        break;
-                    case 'lover':
-                        actionDescription.textContent = 'Выберите игрока для защиты:';
-                        renderPlayerActions('protect', player);
-                        break;
-                    case 'maniac':
-                        actionDescription.textContent = 'Выберите жертву:';
-                        renderPlayerActions('murder', player);
-                        break;
-                    default:
-                        actionDescription.textContent = 'Вы спите... Наступает ночь.';
-                }
-            } else {
-                actionDescription.textContent = 'Обсудите и выберите игрока для исключения:';
-                renderPlayerActions('vote', player);
+            // Автоматическое завершение фазы по таймеру
+            if (timeLeft <= 0) {
+                endPhase();
             }
+        }, 1000);
+    }
+    
+    // Обновление описания действий
+    function updateActionDescription(player) {
+        actionButtons.innerHTML = '';
+        
+        // Если игрок мертв
+        if (player.status !== 'alive') {
+            actionDescription.textContent = 'Вы мертвы и не можете действовать.';
+            return;
         }
         
-        // Рендер действий с игроками
-        function renderPlayerActions(actionType, currentPlayer) {
-            const alivePlayers = gameState.players.filter(p => 
-                p.status === 'alive' && p.id !== currentPlayer.id
-            );
-            
-            if (alivePlayers.length === 0) {
-                actionDescription.textContent = 'Нет других игроков для действия';
-                return;
+        if (gameState.phase === 'night') {
+            switch(player.role) {
+                case 'mafia':
+                    actionDescription.textContent = 'Выберите игрока для устранения:';
+                    renderPlayerActions('kill', player);
+                    break;
+                case 'sheriff':
+                    actionDescription.textContent = 'Выберите игрока для проверки:';
+                    renderPlayerActions('check', player);
+                    break;
+                case 'doctor':
+                    actionDescription.textContent = 'Выберите игрока для лечения:';
+                    renderPlayerActions('heal', player);
+                    break;
+                case 'lover':
+                    actionDescription.textContent = 'Выберите игрока для защиты:';
+                    renderPlayerActions('protect', player);
+                    break;
+                case 'maniac':
+                    actionDescription.textContent = 'Выберите жертву:';
+                    renderPlayerActions('murder', player);
+                    break;
+                default:
+                    actionDescription.textContent = 'Вы спите... Наступает ночь.';
             }
+        } else {
+            actionDescription.textContent = 'Обсудите и выберите игрока для исключения:';
+            renderPlayerActions('vote', player);
+        }
+    }
+    
+    // Рендер действий с игроками
+    function renderPlayerActions(actionType, currentPlayer) {
+        const alivePlayers = gameState.players.filter(p => 
+            p.status === 'alive' && p.id !== currentPlayer.id
+        );
+        
+        if (alivePlayers.length === 0) {
+            actionDescription.textContent = 'Нет других игроков для действия';
+            return;
+        }
+        
+        alivePlayers.forEach(player => {
+            const btn = document.createElement('button');
+            btn.textContent = player.name;
+            btn.style.margin = '4px';
+            btn.style.fontSize = '0.9rem';
             
-            alivePlayers.forEach(player => {
-                const btn = document.createElement('button');
-                btn.textContent = player.name;
-                btn.style.margin = '4px';
-                btn.style.fontSize = '0.9rem';
+            btn.addEventListener('click', () => {
+                if (actionType === 'kill') {
+                    // Мафия выбирает жертву
+                    gameState.killTarget = player.id;
+                    addLog(`${currentPlayer.name} (мафия) выбрал(а) ${player.name} для устранения`, 'mafia');
+                } else if (actionType === 'check') {
+                    // Шериф проверяет игрока
+                    gameState.checkTarget = player.id;
+                    const role = roleTranslations[player.role];
+                    addLog(`${currentPlayer.name} (шериф) проверил(а) ${player.name}. Роль: ${role}`, 'sheriff');
+                } else if (actionType === 'heal') {
+                    // Доктор лечит игрока
+                    gameState.healTarget = player.id;
+                    addLog(`${currentPlayer.name} (доктор) вылечил(а) ${player.name}`);
+                } else if (actionType === 'protect') {
+                    // Любовница защищает игрока
+                    gameState.protectTarget = player.id;
+                    addLog(`${currentPlayer.name} (любовница) защитил(а) ${player.name}`);
+                } else if (actionType === 'murder') {
+                    // Маньяк убивает игрока
+                    gameState.murderTarget = player.id;
+                    addLog(`${currentPlayer.name} (маньяк) выбрал(а) ${player.name} для убийства`);
+                } else {
+                    // Голосование днем
+                    gameState.votes[currentPlayer.id] = player.id;
+                    addLog(`${currentPlayer.name} проголосовал(а) против ${player.name}`);
+                }
                 
-                btn.addEventListener('click', () => {
-                    if (actionType === 'kill') {
-                        // Мафия выбирает жертву
-                        gameState.killTarget = player.id;
-                        addLog(`${currentPlayer.name} (мафия) выбрал(а) ${player.name} для устранения`, 'mafia');
-                    } else if (actionType === 'check') {
-                        // Шериф проверяет игрока
-                        gameState.checkTarget = player.id;
-                        const role = roleTranslations[player.role];
-                        addLog(`${currentPlayer.name} (шериф) проверил(а) ${player.name}. Роль: ${role}`, 'sheriff');
-                    } else if (actionType === 'heal') {
-                        // Доктор лечит игрока
-                        gameState.healTarget = player.id;
-                        addLog(`${currentPlayer.name} (доктор) вылечил(а) ${player.name}`);
-                    } else if (actionType === 'protect') {
-                        // Любовница защищает игрока
-                        gameState.protectTarget = player.id;
-                        addLog(`${currentPlayer.name} (любовница) защитил(а) ${player.name}`);
-                    } else if (actionType === 'murder') {
-                        // Маньяк убивает игрока
-                        gameState.murderTarget = player.id;
-                        addLog(`${currentPlayer.name} (маньяк) выбрал(а) ${player.name} для убийства`);
-                    } else {
-                        // Голосование днем
-                        gameState.votes[currentPlayer.id] = player.id;
-                        addLog(`${currentPlayer.name} проголосовал(а) против ${player.name}`);
-                    }
-                    
-                    // Переходим к следующему игроку
-                    nextPlayer();
-                });
-                
-                actionButtons.appendChild(btn);
-            });
-            
-            // Кнопка пропуска
-            const skipBtn = document.createElement('button');
-            skipBtn.textContent = 'Пропустить';
-            skipBtn.style.margin = '4px';
-            skipBtn.style.background = '#555';
-            skipBtn.style.fontSize = '0.9rem';
-            
-            skipBtn.addEventListener('click', () => {
-                addLog(`${currentPlayer.name} пропустил(а) действие`);
+                // Переходим к следующему игроку
                 nextPlayer();
             });
             
-            actionButtons.appendChild(skipBtn);
+            actionButtons.appendChild(btn);
+        });
+        
+        // Кнопка пропуска
+        const skipBtn = document.createElement('button');
+        skipBtn.textContent = 'Пропустить';
+        skipBtn.style.margin = '4px';
+        skipBtn.style.background = '#555';
+        skipBtn.style.fontSize = '0.9rem';
+        
+        skipBtn.addEventListener('click', () => {
+            addLog(`${currentPlayer.name} пропустил(а) действие`);
+            nextPlayer();
+        });
+        
+        actionButtons.appendChild(skipBtn);
+    }
+    
+    // Добавление записи в лог
+    function addLog(message, type = '') {
+        gameState.logs.push({message, type, timestamp: Date.now()});
+        
+        if (gameState.logs.length > 10) {
+            gameState.logs.shift();
         }
         
-        // Добавление записи в лог
-        function addLog(message, type = '') {
-            gameState.logs.push({message, type, timestamp: Date.now()});
-            
-            if (gameState.logs.length > 10) {
-                gameState.logs.shift();
-            }
-            
-            saveGameState();
+        saveGameState();
+    }
+    
+    // Обновление логов
+    function updateGameLog() {
+        gameLog.innerHTML = '';
+        
+        gameState.logs.forEach(log => {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${log.type ? log.type + '-log' : ''}`;
+            logEntry.innerHTML = `<i class="far fa-clock"></i> ${log.message}`;
+            gameLog.appendChild(logEntry);
+        });
+        
+        // Прокрутка вниз
+        gameLog.scrollTop = gameLog.scrollHeight;
+    }
+    
+    // Следующий игрок
+    function nextPlayer() {
+        const currentIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer);
+        let nextIndex = (currentIndex + 1) % gameState.players.length;
+        
+        // Пропускаем мёртвых игроков
+        while (nextIndex !== currentIndex && gameState.players[nextIndex].status !== 'alive') {
+            nextIndex = (nextIndex + 1) % gameState.players.length;
         }
         
-        // Обновление логов
-        function updateGameLog() {
-            gameLog.innerHTML = '';
+        // Если все игроки мертвы, завершаем фазу
+        if (gameState.players[nextIndex].status !== 'alive') {
+            endPhase();
+            return;
+        }
+        
+        gameState.currentPlayer = gameState.players[nextIndex].id;
+        
+        // Если круг завершён, меняем фазу
+        if (gameState.currentPlayer === gameState.players[0].id) {
+            endPhase();
+        }
+        
+        // Сохраняем состояние
+        saveGameState();
+        checkGameOver();
+    }
+    
+    // Завершение фазы
+    function endPhase() {
+        if (gameState.phase === 'night') {
+            // Обработка действий ночи
+            processNightActions();
             
-            gameState.logs.forEach(log => {
-                const logEntry = document.createElement('div');
-                logEntry.className = `log-entry ${log.type ? log.type + '-log' : ''}`;
-                logEntry.innerHTML = `<i class="far fa-clock"></i> ${log.message}`;
-                gameLog.appendChild(logEntry);
+            gameState.phase = 'day';
+            addLog('Наступает день. Обсуждение начинается...');
+            gameState.dayCount++;
+        } else {
+            // Обработка голосования днем
+            const voteCounts = {};
+            Object.values(gameState.votes).forEach(vote => {
+                voteCounts[vote] = (voteCounts[vote] || 0) + 1;
             });
             
-            // Прокрутка вниз
-            gameLog.scrollTop = gameLog.scrollHeight;
-        }
-        
-        // Следующий игрок
-        function nextPlayer() {
-            const currentIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer);
-            let nextIndex = (currentIndex + 1) % gameState.players.length;
+            let maxVotes = 0;
+            let votedPlayerId = null;
             
-            // Пропускаем мёртвых игроков
-            while (nextIndex !== currentIndex && gameState.players[nextIndex].status !== 'alive') {
-                nextIndex = (nextIndex + 1) % gameState.players.length;
+            for (const [playerId, votes] of Object.entries(voteCounts)) {
+                if (votes > maxVotes) {
+                    maxVotes = votes;
+                    votedPlayerId = playerId;
+                }
             }
             
-            // Если все игроки мертвы, завершаем фазу
-            if (gameState.players[nextIndex].status !== 'alive') {
-                endPhase();
-                return;
-            }
-            
-            gameState.currentPlayer = gameState.players[nextIndex].id;
-            
-            // Если круг завершён, меняем фазу
-            if (gameState.currentPlayer === gameState.players[0].id) {
-                endPhase();
-            }
-            
-            // Сохраняем состояние
-            saveGameState();
-            checkGameOver();
-        }
-        
-        // Завершение фазы
-        function endPhase() {
-            if (gameState.phase === 'night') {
-                // Обработка действий ночи
-                processNightActions();
-                
-                gameState.phase = 'day';
-                addLog('Наступает день. Обсуждение начинается...');
-                gameState.dayCount++;
+            if (votedPlayerId && maxVotes > 0) {
+                const votedPlayer = gameState.players.find(p => p.id === votedPlayerId);
+                if (votedPlayer) {
+                    votedPlayer.status = 'dead';
+                    addLog(`Игроки решили исключить ${votedPlayer.name}. Роль: ${roleTranslations[votedPlayer.role]}`);
+                }
             } else {
-                // Обработка голосования днем
-                const voteCounts = {};
-                Object.values(gameState.votes).forEach(vote => {
-                    voteCounts[vote] = (voteCounts[vote] || 0) + 1;
+                addLog('Игроки не смогли договориться, никто не исключен.');
+            }
+            
+            gameState.votes = {};
+            gameState.phase = 'night';
+            addLog('Наступает ночь. Город засыпает...');
+        }
+        
+        // Устанавливаем таймер для новой фазы
+        gameState.phaseEndTime = Date.now() + gameState.phaseDuration;
+        
+        // Сбрасываем текущего игрока на первого живого
+        const firstAlivePlayer = gameState.players.find(p => p.status === 'alive');
+        if (firstAlivePlayer) {
+            gameState.currentPlayer = firstAlivePlayer.id;
+        }
+        
+        // Сохраняем состояние
+        saveGameState();
+        checkGameOver();
+    }
+    
+    // Обработка ночных действий
+    function processNightActions() {
+        // Доктор: лечит выбранного игрока
+        if (gameState.healTarget) {
+            const targetPlayer = gameState.players.find(p => p.id === gameState.healTarget);
+            if (targetPlayer) {
+                // Если мафия выбрала того же игрока, отменяем убийство
+                if (gameState.killTarget === gameState.healTarget) {
+                    gameState.killTarget = null;
+                    addLog(`Доктор спас ${targetPlayer.name}!`);
+                }
+            }
+            gameState.healTarget = null;
+        }
+        
+        // Любовница: защищает выбранного игрока
+        if (gameState.protectTarget) {
+            const targetPlayer = gameState.players.find(p => p.id === gameState.protectTarget);
+            if (targetPlayer) {
+                // Если мафия выбрала защищенного, отменяем убийство
+                if (gameState.killTarget === gameState.protectTarget) {
+                    gameState.killTarget = null;
+                    addLog(`Любовница защитила ${targetPlayer.name}!`);
+                }
+            }
+            gameState.protectTarget = null;
+        }
+        
+        // Маньяк: убивает выбранного игрока
+        if (gameState.murderTarget) {
+            const targetPlayer = gameState.players.find(p => p.id === gameState.murderTarget);
+            if (targetPlayer && targetPlayer.status === 'alive') {
+                targetPlayer.status = 'dead';
+                addLog(`Маньяк убил ${targetPlayer.name}!`);
+            }
+            gameState.murderTarget = null;
+        }
+        
+        // Мафия: убивает выбранного игрока
+        if (gameState.killTarget) {
+            const targetPlayer = gameState.players.find(p => p.id === gameState.killTarget);
+            if (targetPlayer && targetPlayer.status === 'alive') {
+                targetPlayer.status = 'dead';
+                addLog(`Мафия убила ${targetPlayer.name}!`);
+            }
+            gameState.killTarget = null;
+        }
+    }
+    
+    // Проверка окончания игры
+    function checkGameOver() {
+        const alivePlayers = gameState.players.filter(p => p.status === 'alive');
+        const mafiaCount = alivePlayers.filter(p => p.role === 'mafia').length;
+        const civiliansCount = alivePlayers.filter(p => 
+            p.role !== 'mafia' && 
+            p.role !== 'maniac' && 
+            p.role !== 'doctor' && 
+            p.role !== 'lover'
+        ).length;
+        
+        const maniacAlive = alivePlayers.some(p => p.role === 'maniac');
+        const doctorAlive = alivePlayers.some(p => p.role === 'doctor');
+        const loverAlive = alivePlayers.some(p => p.role === 'lover');
+        
+        // Победа мафии
+        if (mafiaCount >= (alivePlayers.length - mafiaCount)) {
+            endGame('mafia');
+            return;
+        }
+        
+        // Победа мирных
+        if (mafiaCount === 0 && !maniacAlive) {
+            endGame('civilians');
+            return;
+        }
+        
+        // Победа маньяка
+        if (maniacAlive && alivePlayers.length === 1) {
+            endGame('maniac');
+            return;
+        }
+    }
+    
+    // Завершение игры
+    function endGame(winner) {
+        gameState.gameOver = true;
+        gameState.winner = winner;
+        gameState.status = 'completed'; // Меняем статус комнаты
+        
+        // Добавляем сообщение в чат
+        let winnerText = '';
+        switch(winner) {
+            case 'mafia':
+                winnerText = 'Победа мафии!';
+                break;
+            case 'civilians':
+                winnerText = 'Победа мирных жителей!';
+                break;
+            case 'maniac':
+                winnerText = 'Победа маньяка!';
+                break;
+            default:
+                winnerText = 'Игра завершена!';
+        }
+            
+        gameState.chatMessages.push({
+            isSystem: true,
+            text: `Игра завершена! ${winnerText}`,
+            timestamp: Date.now()
+        });
+        
+        // Обновляем статистику пользователя
+        if (currentUser) {
+            const player = gameState.players.find(p => p.id === currentPlayer.id);
+            if (player) {
+                const won = (winner === 'mafia' && player.role === 'mafia') || 
+                           (winner === 'civilians' && player.role !== 'mafia' && player.role !== 'maniac') ||
+                           (winner === 'maniac' && player.role === 'maniac');
+                updateStatsAfterGame(player.role, won);
+            }
+        }
+        
+        // Очищаем таймер
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
+        saveGameState();
+    }
+    
+    // Обновление экрана результатов
+    function updateResultScreen() {
+        // Установка заголовка
+        switch(gameState.winner) {
+            case 'mafia':
+                winnerTitle.textContent = 'Победа мафии!';
+                break;
+            case 'civilians':
+                winnerTitle.textContent = 'Победа мирных жителей!';
+                break;
+            case 'maniac':
+                winnerTitle.textContent = 'Победа маньяка!';
+                break;
+            default:
+                winnerTitle.textContent = 'Игра завершена!';
+        }
+        
+        // Отображение результатов игроков
+        resultPlayerList.innerHTML = '';
+        
+        gameState.players.forEach(player => {
+            const playerCard = document.createElement('div');
+            playerCard.className = `player-card ${player.role} ${player.status}`;
+            
+            const roleClass = player.role + '-badge';
+            const roleName = roleTranslations[player.role];
+            
+            playerCard.innerHTML = `
+                <div class="player-name">${player.name}</div>
+                <div>
+                    <span class="role-badge ${roleClass}">${roleName}</span>
+                </div>
+                <div class="player-status ${player.status}">
+                    ${player.status === 'alive' ? 'Выжил' : 'Убит'}
+                </div>
+            `;
+            
+            resultPlayerList.appendChild(playerCard);
+        });
+    }
+    
+    // Перезапуск игры
+    function restartGame() {
+        // Переключение на экран входа
+        resultScreen.classList.remove('active');
+        joinScreen.classList.add('active');
+        
+        // Очищаем таймер
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
+        // Сброс состояния
+        gameState = {
+            roomId: '',
+            players: [],
+            currentPlayer: null,
+            dayCount: 1,
+            phase: 'night',
+            gameOver: false,
+            winner: null,
+            logs: [],
+            votes: {},
+            killTarget: null,
+            checkTarget: null,
+            healTarget: null,
+            protectTarget: null,
+            murderTarget: null,
+            chatMessages: [],
+            status: 'waiting',
+            phaseEndTime: 0,
+            phaseDuration: 120000
+        };
+        
+        currentPlayer = {
+            id: null,
+            name: '',
+            role: null,
+            status: 'alive',
+            isHost: false,
+            isVIP: false,
+            lastSeen: Date.now()
+        };
+    }
+    
+    // Возврат на экран ввода ID
+    function goBackToJoinScreen() {
+        // Удаляем игрока из комнаты
+        if (gameState.roomId) {
+            gameState.players = gameState.players.filter(p => p.id !== currentPlayer.id);
+            
+            // Если игроков не осталось, удаляем комнату
+            if (gameState.players.length === 0) {
+                const roomRef = database.ref(`rooms/${gameState.roomId}`);
+                roomRef.remove();
+            } else {
+                // Добавляем сообщение о выходе
+                gameState.chatMessages.push({
+                    isSystem: true,
+                    text: `${currentPlayer.name} покинул игру.`,
+                    timestamp: Date.now()
                 });
                 
-                let maxVotes = 0;
-                let votedPlayerId = null;
-                
-                for (const [playerId, votes] of Object.entries(voteCounts)) {
-                    if (votes > maxVotes) {
-                        maxVotes = votes;
-                        votedPlayerId = playerId;
-                    }
-                }
-                
-                if (votedPlayerId && maxVotes > 0) {
-                    const votedPlayer = gameState.players.find(p => p.id === votedPlayerId);
-                    if (votedPlayer) {
-                        votedPlayer.status = 'dead';
-                        addLog(`Игроки решили исключить ${votedPlayer.name}. Роль: ${roleTranslations[votedPlayer.role]}`);
-                    }
-                } else {
-                    addLog('Игроки не смогли договориться, никто не исключен.');
-                }
-                
-                gameState.votes = {};
-                gameState.phase = 'night';
-                addLog('Наступает ночь. Город засыпает...');
-            }
-            
-            // Устанавливаем таймер для новой фазы
-            gameState.phaseEndTime = Date.now() + gameState.phaseDuration;
-            
-            // Сбрасываем текущего игрока на первого живого
-            const firstAlivePlayer = gameState.players.find(p => p.status === 'alive');
-            if (firstAlivePlayer) {
-                gameState.currentPlayer = firstAlivePlayer.id;
-            }
-            
-            // Сохраняем состояние
-            saveGameState();
-            checkGameOver();
-        }
-        
-        // Обработка ночных действий
-        function processNightActions() {
-            // Доктор: лечит выбранного игрока
-            if (gameState.healTarget) {
-                const targetPlayer = gameState.players.find(p => p.id === gameState.healTarget);
-                if (targetPlayer) {
-                    // Если мафия выбрала того же игрока, отменяем убийство
-                    if (gameState.killTarget === gameState.healTarget) {
-                        gameState.killTarget = null;
-                        addLog(`Доктор спас ${targetPlayer.name}!`);
-                    }
-                }
-                gameState.healTarget = null;
-            }
-            
-            // Любовница: защищает выбранного игрока
-            if (gameState.protectTarget) {
-                const targetPlayer = gameState.players.find(p => p.id === gameState.protectTarget);
-                if (targetPlayer) {
-                    // Если мафия выбрала защищенного, отменяем убийство
-                    if (gameState.killTarget === gameState.protectTarget) {
-                        gameState.killTarget = null;
-                        addLog(`Любовница защитила ${targetPlayer.name}!`);
-                    }
-                }
-                gameState.protectTarget = null;
-            }
-            
-            // Маньяк: убивает выбранного игрока
-            if (gameState.murderTarget) {
-                const targetPlayer = gameState.players.find(p => p.id === gameState.murderTarget);
-                if (targetPlayer && targetPlayer.status === 'alive') {
-                    targetPlayer.status = 'dead';
-                    addLog(`Маньяк убил ${targetPlayer.name}!`);
-                }
-                gameState.murderTarget = null;
-            }
-            
-            // Мафия: убивает выбранного игрока
-            if (gameState.killTarget) {
-                const targetPlayer = gameState.players.find(p => p.id === gameState.killTarget);
-                if (targetPlayer && targetPlayer.status === 'alive') {
-                    targetPlayer.status = 'dead';
-                    addLog(`Мафия убила ${targetPlayer.name}!`);
-                }
-                gameState.killTarget = null;
+                saveGameState();
             }
         }
         
-        // Проверка окончания игры
-        function checkGameOver() {
-            const alivePlayers = gameState.players.filter(p => p.status === 'alive');
-            const mafiaCount = alivePlayers.filter(p => p.role === 'mafia').length;
-            const civiliansCount = alivePlayers.filter(p => 
-                p.role !== 'mafia' && 
-                p.role !== 'maniac' && 
-                p.role !== 'doctor' && 
-                p.role !== 'lover'
-            ).length;
-            
-            const maniacAlive = alivePlayers.some(p => p.role === 'maniac');
-            const doctorAlive = alivePlayers.some(p => p.role === 'doctor');
-            const loverAlive = alivePlayers.some(p => p.role === 'lover');
-            
-            // Победа мафии
-            if (mafiaCount >= (alivePlayers.length - mafiaCount)) {
-                endGame('mafia');
-                return;
-            }
-            
-            // Победа мирных
-            if (mafiaCount === 0 && !maniacAlive) {
-                endGame('civilians');
-                return;
-            }
-            
-            // Победа маньяка
-            if (maniacAlive && alivePlayers.length === 1) {
-                endGame('maniac');
-                return;
-            }
+        // Очищаем таймер
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
         }
         
-        // Завершение игры
-        function endGame(winner) {
-            gameState.gameOver = true;
-            gameState.winner = winner;
-            gameState.status = 'completed'; // Меняем статус комнаты
-            
-            // Добавляем сообщение в чат
-            let winnerText = '';
-            switch(winner) {
-                case 'mafia':
-                    winnerText = 'Победа мафии!';
-                    break;
-                case 'civilians':
-                    winnerText = 'Победа мирных жителей!';
-                    break;
-                case 'maniac':
-                    winnerText = 'Победа маньяка!';
-                    break;
-                default:
-                    winnerText = 'Игра завершена!';
-            }
-                
-            gameState.chatMessages.push({
-                isSystem: true,
-                text: `Игра завершена! ${winnerText}`,
-                timestamp: Date.now()
-            });
-            
-            // Обновляем статистику пользователя
-            if (currentUser) {
-                const player = gameState.players.find(p => p.id === currentPlayer.id);
-                if (player) {
-                    const won = (winner === 'mafia' && player.role === 'mafia') || 
-                               (winner === 'civilians' && player.role !== 'mafia' && player.role !== 'maniac') ||
-                               (winner === 'maniac' && player.role === 'maniac');
-                    updateStatsAfterGame(player.role, won);
-                }
-            }
-            
-            // Очищаем таймер
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            
-            saveGameState();
-        }
-        
-        // Обновление экрана результатов
-        function updateResultScreen() {
-            // Установка заголовка
-            switch(gameState.winner) {
-                case 'mafia':
-                    winnerTitle.textContent = 'Победа мафии!';
-                    break;
-                case 'civilians':
-                    winnerTitle.textContent = 'Победа мирных жителей!';
-                    break;
-                case 'maniac':
-                    winnerTitle.textContent = 'Победа маньяка!';
-                    break;
-                default:
-                    winnerTitle.textContent = 'Игра завершена!';
-            }
-            
-            // Отображение результатов игроков
-            resultPlayerList.innerHTML = '';
-            
-            gameState.players.forEach(player => {
-                const playerCard = document.createElement('div');
-                playerCard.className = `player-card ${player.role} ${player.status}`;
-                
-                const roleClass = player.role + '-badge';
-                const roleName = roleTranslations[player.role];
-                
-                playerCard.innerHTML = `
-                    <div class="player-name">${player.name}</div>
-                    <div>
-                        <span class="role-badge ${roleClass}">${roleName}</span>
-                    </div>
-                    <div class="player-status ${player.status}">
-                        ${player.status === 'alive' ? 'Выжил' : 'Убит'}
-                    </div>
-                `;
-                
-                resultPlayerList.appendChild(playerCard);
-            });
-        }
-        
-        // Перезапуск игры
-        function restartGame() {
-            // Переключение на экран входа
-            resultScreen.classList.remove('active');
-            joinScreen.classList.add('active');
-            
-            // Очищаем таймер
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            
-            // Сброс состояния
-            gameState = {
-                roomId: '',
-                players: [],
-                currentPlayer: null,
-                dayCount: 1,
-                phase: 'night',
-                gameOver: false,
-                winner: null,
-                logs: [],
-                votes: {},
-                killTarget: null,
-                checkTarget: null,
-                healTarget: null,
-                protectTarget: null,
-                murderTarget: null,
-                chatMessages: [],
-                status: 'waiting',
-                phaseEndTime: 0,
-                phaseDuration: 120000
-            };
-            
-            currentPlayer = {
-                id: null,
-                name: '',
-                role: null,
-                status: 'alive',
-                isHost: false,
-                isVIP: false,
-                lastSeen: Date.now()
-            };
-        }
-        
-        // Возврат на экран ввода ID
-        function goBackToJoinScreen() {
-            // Удаляем игрока из комнаты
-            if (gameState.roomId) {
-                gameState.players = gameState.players.filter(p => p.id !== currentPlayer.id);
-                
-                // Если игроков не осталось, удаляем комнату
-                if (gameState.players.length === 0) {
-                    const roomRef = database.ref(`rooms/${gameState.roomId}`);
-                    roomRef.remove();
-                } else {
-                    // Добавляем сообщение о выходе
-                    gameState.chatMessages.push({
-                        isSystem: true,
-                        text: `${currentPlayer.name} покинул игру.`,
-                        timestamp: Date.now()
-                    });
-                    
-                    saveGameState();
-                }
-            }
-            
-            // Очищаем таймер
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            
-            lobbyScreen.classList.remove('active');
-            joinScreen.classList.add('active');
-        }
-        
-        // Возврат в лобби
-        function goBackToLobby() {
-            gameScreen.classList.remove('active');
-            lobbyScreen.classList.add('active');
-        }
-        
-        // Запуск игры при загрузке
-        window.onload = initGame;
-    </script>
+        lobbyScreen.classList.remove('active');
+        joinScreen.classList.add('active');
+    }
+    
+    // Возврат в лобби
+    function goBackToLobby() {
+        gameScreen.classList.remove('active');
+        lobbyScreen.classList.add('active');
+    }
+    
+    // Запуск игры при загрузке
+    window.onload = initGame;
+</script>
 </body>
 </html>
