@@ -2239,8 +2239,8 @@
             // Прокручиваем вниз
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Показываем popup для новых сообщений
-            if (gameState.chatMessages.length > 0) {
+            // Показываем popup для новых сообщений только если чат закрыт
+            if (gameState.chatMessages.length > 0 && !chatContainer.classList.contains('open')) {
                 const lastMessage = gameState.chatMessages[gameState.chatMessages.length - 1];
                 if (!lastMessage.isSystem && lastMessage.timestamp > lastSeenMessageTime) {
                     showChatPopups();
