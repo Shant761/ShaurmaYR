@@ -726,64 +726,6 @@
             padding: 4px;
         }
         
-        /* Стили для профиля */
-        .profile-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
-            width: 100%;
-            text-align: center;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .profile-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: #4dabf7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin: 0 auto 15px;
-        }
-        
-        .profile-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            width: 100%;
-            margin-top: 20px;
-        }
-        
-        .stat-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #ffcc00;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        
-        .profile-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
-        }
-        
         /* Стили для списка комнат */
         .rooms-list {
             width: 100%;
@@ -1006,6 +948,11 @@
         .voice-message-btn.recording {
             background: #b21f1f;
             animation: pulse 1.5s infinite;
+        }
+        
+        .voice-message-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         @keyframes pulse {
@@ -1623,8 +1570,15 @@
         let recordingStartTime = 0;
         let recordedAudio = null;
         
+        // Состояние доступа к микрофону
+        let microphoneAccessGranted = false;
+        let microphoneAccessChecked = false;
+        
         // Инициализация игры
         function initGame() {
+            // Проверяем доступ к микрофону при старте
+            checkMicrophoneAccess();
+            
             // Обработчики событий аутентификации
             loginBtn.addEventListener('click', loginUser);
             signupBtn.addEventListener('click', signupUser);
@@ -1691,55 +1645,109 @@
             });
         }
         
-       // Начать запись голоса
+        // Проверка доступа к микрофону
+        async function checkMicrophoneAccess() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    console.log('Браузер не поддерживает доступ к микрофону');
+                    updateMicrophoneUI(false);
+                    return;
+                }
+                
+                // Создаем временный поток для проверки разрешений
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Немедленно останавливаем все треки
+                stream.getTracks().forEach(track => track.stop());
+                
+                microphoneAccessGranted = true;
+                console.log('Доступ к микрофону подтвержден');
+            } catch (error) {
+                console.error('Ошибка доступа к микрофону:', error);
+                microphoneAccessGranted = false;
+            } finally {
+                microphoneAccessChecked = true;
+                updateMicrophoneUI(microphoneAccessGranted);
+            }
+        }
+        
+        // Обновление UI микрофона
+        function updateMicrophoneUI(accessGranted) {
+            if (accessGranted) {
+                voiceMessageBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                voiceMessageBtn.title = "Записать голосовое сообщение";
+                voiceMessageBtn.classList.remove('disabled');
+            } else {
+                voiceMessageBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                voiceMessageBtn.title = "Доступ к микрофону запрещен";
+                voiceMessageBtn.classList.add('disabled');
+            }
+        }
+        
+        // Начать запись голоса
         function startRecording(e) {
             e.preventDefault();
             
-            // Если запись уже идет, выходим
-            if (recorder) return;
-            
-            // Если доступ к микрофону уже был получен
-            if (microphoneAccessGranted && audioStream) {
-                startRecordingWithStream(audioStream);
+            // Если доступ к микрофону запрещен
+            if (microphoneAccessChecked && !microphoneAccessGranted) {
+                alert('Для записи голосовых сообщений разрешите доступ к микрофону в настройках браузера');
                 return;
             }
-
+            
+            // Если доступ еще не проверен
+            if (!microphoneAccessChecked) {
+                alert('Проверяем доступ к микрофону...');
+                checkMicrophoneAccess().then(() => {
+                    if (microphoneAccessGranted) {
+                        startRecordingProcess();
+                    } else {
+                        alert('Для записи голосовых сообщений разрешите доступ к микрофону');
+                    }
+                });
+                return;
+            }
+            
+            startRecordingProcess();
+        }
+        
+        // Основной процесс записи
+        function startRecordingProcess() {
+            // Проверяем поддержку записи голоса
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Ваш браузер не поддерживает запись голоса');
+                return;
+            }
+            
             // Запрашиваем доступ к микрофону
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    microphoneAccessGranted = true;
-                    audioStream = stream;
-                    startRecordingWithStream(stream);
+                    // Создаем рекордер
+                    recorder = RecordRTC(stream, {
+                        type: 'audio',
+                        mimeType: 'audio/webm',
+                        recorderType: RecordRTC.StereoAudioRecorder,
+                        numberOfAudioChannels: 1,
+                        desiredSampRate: 16000,
+                        timeSlice: 1000,
+                        ondataavailable: function(blob) {
+                            // Сохраняем записанный кусок
+                            recordedAudio = blob;
+                        }
+                    });
+                    
+                    // Начинаем запись
+                    recorder.startRecording();
+                    voiceMessageBtn.classList.add('recording');
+                    voiceRecorderIndicator.classList.add('visible');
+                    
+                    // Запускаем таймер длительности записи
+                    recordingStartTime = Date.now();
+                    updateRecordingTimer();
                 })
                 .catch(error => {
                     console.error('Ошибка доступа к микрофону:', error);
                     alert('Не удалось получить доступ к микрофону. Пожалуйста, проверьте разрешения.');
                 });
-        }
-
-        // Начать запись с использованием существующего потока
-        function startRecordingWithStream(stream) {
-            // Создаем рекордер
-            recorder = RecordRTC(stream, {
-                type: 'audio',
-                mimeType: 'audio/webm',
-                recorderType: RecordRTC.StereoAudioRecorder,
-                numberOfAudioChannels: 1,
-                desiredSampRate: 16000,
-                timeSlice: 1000,
-                ondataavailable: function(blob) {
-                    recordedAudio = blob;
-                }
-            });
-            
-            // Начинаем запись
-            recorder.startRecording();
-            voiceMessageBtn.classList.add('recording');
-            voiceRecorderIndicator.classList.add('visible');
-            
-            // Запускаем таймер длительности записи
-            recordingStartTime = Date.now();
-            updateRecordingTimer();
         }
         
         // Обновление таймера записи
@@ -1774,7 +1782,7 @@
                 // Отправляем голосовое сообщение
                 sendVoiceMessage(recordedAudio);
                 
-                // Освобождаем ресурсы (но сохраняем поток)
+                // Освобождаем ресурсы
                 recorder = null;
                 voiceMessageBtn.classList.remove('recording');
                 voiceRecorderIndicator.classList.remove('visible');
@@ -1785,15 +1793,6 @@
                     recordingTimer = null;
                 }
             });
-        }
-
-        // Освободить ресурсы микрофона
-        function cleanupMicrophone() {
-            if (audioStream) {
-                audioStream.getTracks().forEach(track => track.stop());
-                audioStream = null;
-            }
-            microphoneAccessGranted = false;
         }
         
         // Отправить голосовое сообщение
@@ -1827,9 +1826,9 @@
                 gameState.chatMessages.push(newMessage);
                 saveGameState();
             };
-        }           
+        }
         
-      // Открыть модальное окно списка комнат
+        // Открыть модальное окно списка комнат
         function openRoomsModal() {
             roomsModal.classList.add('open');
             loadRoomsList();
