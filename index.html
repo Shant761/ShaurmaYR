@@ -1691,90 +1691,7 @@
             });
         }
         
-        // Начать запись голоса
-        function startRecording(e) {
-            e.preventDefault();
-            
-            // Проверяем поддержку записи голоса
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Ваш браузер не поддерживает запись голоса');
-                return;
-            }
-            
-            // Запрашиваем доступ к микрофону
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    // Создаем рекордер
-                    recorder = RecordRTC(stream, {
-                        type: 'audio',
-                        mimeType: 'audio/webm',
-                        recorderType: RecordRTC.StereoAudioRecorder,
-                        numberOfAudioChannels: 1,
-                        desiredSampRate: 16000,
-                        timeSlice: 1000,
-                        ondataavailable: function(blob) {
-                            // Сохраняем записанный кусок
-                            recordedAudio = blob;
-                        }
-                    });
-                    
-                    // Начинаем запись
-                    recorder.startRecording();
-                    voiceMessageBtn.classList.add('recording');
-                    voiceRecorderIndicator.classList.add('visible');
-                    
-                    // Запускаем таймер длительности записи
-                    recordingStartTime = Date.now();
-                    updateRecordingTimer();
-                })
-                .catch(error => {
-                    console.error('Ошибка доступа к микрофону:', error);
-                    alert('Не удалось получить доступ к микрофону. Пожалуйста, проверьте разрешения.');
-                });
-        }
-        
-        // Обновление таймера записи
-        function updateRecordingTimer() {
-            if (!recorder) return;
-            
-            const elapsed = Date.now() - recordingStartTime;
-            const seconds = Math.floor(elapsed / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const displaySeconds = seconds % 60;
-            
-            audioDuration.textContent = `${minutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
-            
-            // Ограничиваем запись 30 секундами
-            if (seconds >= 30) {
-                stopRecording();
-                return;
-            }
-            
-            recordingTimer = setTimeout(updateRecordingTimer, 1000);
-        }
-        
-        // Остановить запись
-        function stopRecording() {
-            if (!recorder) return;
-            
-            // Останавливаем запись
-            recorder.stopRecording(() => {
-                // Получаем записанный аудио-блоб
-                recordedAudio = recorder.getBlob();
-                
-                // Отправляем голосовое сообщение
-                sendVoiceMessage(recordedAudio);
-                
-                // Освобождаем ресурсы
-                recorder = null;
-                voiceMessageBtn.classList.remove('recording');
-                voiceRecorderIndicator.classList.remove('visible');
-                
-                // Останавливаем таймер
-                if (recordingTimer) {
-                    clearTimeout(recordingTimer);
-                    recordingTimer = null;
- // Начать запись голоса
+       // Начать запись голоса
         function startRecording(e) {
             e.preventDefault();
             
@@ -1910,9 +1827,9 @@
                 gameState.chatMessages.push(newMessage);
                 saveGameState();
             };
-        }
+        }           
         
-        // Открыть модальное окно списка комнат
+      // Открыть модальное окно списка комнат
         function openRoomsModal() {
             roomsModal.classList.add('open');
             loadRoomsList();
